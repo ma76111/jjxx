@@ -98,9 +98,9 @@ if ! command -v lt &> /dev/null; then
     npm install -g localtunnel --unsafe-perm=true --allow-root
 fi
 
-# Start LocalTunnel
+# Start LocalTunnel (random subdomain to avoid conflicts)
 echo "Starting LocalTunnel..."
-PM2_HOME=/root/.pm2 pm2 start "lt --port 3001 --subdomain vLa69OimVSeyqfnhYcW5zPsU2T7ENjGtg" --name "localtunnel"
+PM2_HOME=/root/.pm2 pm2 start "lt --port 3001" --name "localtunnel"
 
 echo ""
 echo -e "${GREEN}✓ All services started!${NC}"
@@ -121,9 +121,14 @@ echo "================================================"
 echo "  Access URLs"
 echo "================================================"
 echo -e "${GREEN}Local API:${NC}    http://localhost:3001/health"
-echo -e "${GREEN}Public URL:${NC}   https://vLa69OimVSeyqfnhYcW5zPsU2T7ENjGtg.loca.lt"
+echo ""
+echo -e "${YELLOW}Getting public URL...${NC}"
+sleep 3
+echo -e "${GREEN}Public URL:${NC}"
+PM2_HOME=/root/.pm2 pm2 logs localtunnel --lines 10 --nostream | grep -o "https://.*\.loca\.lt" | head -1
 echo ""
 echo -e "${YELLOW}Note:${NC} First time you visit, click 'Click to Continue'"
+echo -e "${YELLOW}Tip:${NC}  Run 'pm2 logs localtunnel' to see the full URL anytime"
 echo "================================================"
 echo ""
 
