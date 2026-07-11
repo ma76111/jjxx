@@ -2,80 +2,75 @@
 
 # ================================================================
 # Quick Management Script
-# سكريبت إدارة سريع للبوت
+# Quick bot management commands
 # ================================================================
 
 show_status() {
-    echo "📊 حالة الخدمات:"
+    echo "📊 Service Status:"
     echo "================================"
     pm2 status
     echo ""
-    echo "💾 استخدام الذاكرة:"
+    echo "💾 Memory Usage:"
     pm2 describe telegram-bot | grep "memory" || echo "N/A"
     pm2 describe web-server | grep "memory" || echo "N/A"
 }
 
 show_logs() {
-    echo "اختر الخدمة:"
+    echo "Choose service:"
     echo "1. Telegram Bot"
     echo "2. Web Server"
-    echo "3. الكل"
-    read -p "اختيارك: " choice
+    echo "3. All"
+    read -p "Your choice: " choice
     
     case $choice in
         1) pm2 logs telegram-bot --lines 50 ;;
         2) pm2 logs web-server --lines 50 ;;
         3) pm2 logs --lines 50 ;;
-        *) echo "❌ اختيار غير صحيح" ;;
+        *) echo "❌ Invalid choice" ;;
     esac
 }
 
 restart_services() {
-    echo "🔄 إعادة تشغيل الخدمات..."
+    echo "🔄 Restarting services..."
     pm2 restart all
-    echo "✅ تم إعادة التشغيل"
+    echo "✅ Services restarted"
     pm2 status
 }
 
 stop_services() {
-    echo "⏸️  إيقاف الخدمات..."
+    echo "⏸️  Stopping services..."
     pm2 stop all
-    echo "✅ تم الإيقاف"
+    echo "✅ Services stopped"
 }
 
 start_services() {
-    echo "▶️  تشغيل الخدمات..."
+    echo "▶️  Starting services..."
     pm2 start all
-    echo "✅ تم التشغيل"
+    echo "✅ Services started"
     pm2 status
 }
 
 backup_database() {
-    echo "💾 نسخ احتياطي لقاعدة البيانات..."
+    echo "💾 Backing up database..."
     timestamp=$(date +%Y%m%d_%H%M%S)
     mkdir -p backups
     cp bot.db "backups/bot_${timestamp}.db"
-    echo "✅ تم النسخ الاحتياطي: backups/bot_${timestamp}.db"
+    echo "✅ Backup saved: backups/bot_${timestamp}.db"
 }
 
 update_code() {
-    echo "🔄 تحديث الكود من GitHub..."
+    echo "🔄 Updating code from GitHub..."
     
     if [ ! -d ".git" ]; then
-        echo "❌ هذا ليس مستودع Git"
+        echo "❌ Not a Git repository"
         return
     fi
     
-    # حفظ التغييرات المحلية
     git stash
-    
-    # سحب التحديثات
     git pull origin main
-    
-    # إعادة التطبيق
     git stash pop
     
-    echo "📦 تحديث الحزم..."
+    echo "📦 Updating packages..."
     npm install
     
     if [ -d "web/server" ]; then
@@ -83,40 +78,40 @@ update_code() {
     fi
     
     if [ -d "web/client" ]; then
-        cd web/client && npm install && npm run build && cd ../..
+        cd web/client && npm install && npm run build && cd../..
     fi
     
-    echo "🔄 إعادة تشغيل الخدمات..."
+    echo "🔄 Restarting services..."
     pm2 restart all
     
-    echo "✅ تم التحديث بنجاح"
+    echo "✅ Update complete"
 }
 
 clean_logs() {
-    echo "🧹 تنظيف ملفات اللوجات..."
+    echo "🧹 Cleaning log files..."
     pm2 flush
     rm -f logs/*.log
-    echo "✅ تم تنظيف اللوجات"
+    echo "✅ Logs cleaned"
 }
 
-# القائمة الرئيسية
+# Main Menu
 echo ""
 echo "================================"
-echo "   🤖 إدارة البوت السريعة"
+echo "   🤖 Quick Bot Management"
 echo "================================"
 echo ""
-echo "1. حالة الخدمات"
-echo "2. عرض اللوجات"
-echo "3. إعادة تشغيل"
-echo "4. إيقاف الخدمات"
-echo "5. تشغيل الخدمات"
-echo "6. نسخ احتياطي للبيانات"
-echo "7. تحديث الكود"
-echo "8. تنظيف اللوجات"
-echo "9. فتح نفق عام"
-echo "0. خروج"
+echo "1. Service Status"
+echo "2. View Logs"
+echo "3. Restart Services"
+echo "4. Stop Services"
+echo "5. Start Services"
+echo "6. Backup Database"
+echo "7. Update Code"
+echo "8. Clean Logs"
+echo "9. Open Public Tunnel"
+echo "0. Exit"
 echo ""
-read -p "اختيارك: " choice
+read -p "Your choice: " choice
 
 case $choice in
     1) show_status ;;
@@ -128,6 +123,6 @@ case $choice in
     7) update_code ;;
     8) clean_logs ;;
     9) bash start-tunnel.sh ;;
-    0) echo "👋 إلى اللقاء!" ;;
-    *) echo "❌ اختيار غير صحيح" ;;
+    0) echo "👋 Goodbye!" ;;
+    *) echo "❌ Invalid choice" ;;
 esac

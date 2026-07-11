@@ -1,31 +1,29 @@
-# 🤖 Referral & Paid-Tasks Bot
+# 🤖 Referral & Paid-Tasks Telegram Bot
 
-بوت تيليجرام لتبادل الإحالات وتنفيذ المهام المدفوعة + لوحة ويب للمستخدمين والأدمن.
+Full-featured Telegram bot for referrals and paid tasks with web dashboard for users and admins.
 
 ---
 
-## 🚀 التشغيل السريع على Termux
+## 🚀 Quick Setup on Termux
 
-**أسهل طريقة! أمر واحد فقط:**
+**Easiest way! One command:**
 
 ```bash
 pkg update -y && pkg install -y git nodejs && git clone https://github.com/ma76111/jjxx.git && cd jjxx && bash setup-termux.sh
 ```
 
-📖 **دليل Termux:** [QUICKSTART_TERMUX.md](./QUICKSTART_TERMUX.md) | [TERMUX_SETUP.md](./TERMUX_SETUP.md)
-
 ---
 
-## 💻 التشغيل على Windows/Linux/Mac
+## 💻 Setup on Windows/Linux/Mac
 
-### المتطلبات
+### Requirements
 
 - Node.js 20+
 - npm 10+
 
-### الإعداد السريع
+### Quick Setup
 
-### 1. تثبيت الاعتماديات
+### 1. Install Dependencies
 
 ```bash
 # Bot (root)
@@ -38,33 +36,33 @@ cd web/server && npm install
 cd web/client && npm install
 ```
 
-### 2. إعداد متغيرات البيئة
+### 2. Setup Environment Variables
 
 ```bash
-# نسخ ملفات البيئة
-cp .env.example .env                    # أو عدّل .env مباشرة
+# Copy environment files
+cp .env.example .env
 cp web/server/.env.example web/server/.env
 cp web/client/.env.example web/client/.env
 ```
 
-**`.env` (البوت):**
+**`.env` (Bot):**
 ```
 BOT_TOKEN=<token from @BotFather>
 BOT_NAME=your_bot
 MAIN_ADMIN_ID=<telegram_id>
 ADMIN_IDS=<id1,id2>
 DATABASE_PATH=./bot.db
-BINANCE_API_KEY=           # اختياري — للتحقق التلقائي من TXID
-BINANCE_API_SECRET=        # اختياري
-GITHUB_BACKUP_TOKEN=       # اختياري — للنسخ الاحتياطي
+BINANCE_API_KEY=           # Optional — for automatic TXID verification
+BINANCE_API_SECRET=        # Optional
+GITHUB_BACKUP_TOKEN=       # Optional — for backups
 GITHUB_BACKUP_REPO=user/repo
 ```
 
 **`web/server/.env`:**
 ```
-BOT_TOKEN=<نفس token البوت>
+BOT_TOKEN=<same bot token>
 BOT_NAME=your_bot
-JWT_SECRET=<سلسلة عشوائية طويلة>
+JWT_SECRET=<long random string>
 WEB_PORT=3001
 CLIENT_ORIGIN=http://localhost:5173
 MAIN_ADMIN_ID=<telegram_id>
@@ -76,7 +74,7 @@ VITE_BOT_NAME=your_bot
 VITE_API_URL=http://localhost:3001/api
 ```
 
-### 3. تشغيل في وضع التطوير
+### 3. Run in Development Mode
 
 ```bash
 # Terminal 1 — Bot
@@ -89,13 +87,13 @@ node web/server/index.js
 cd web/client && npm run dev
 ```
 
-### 4. بناء الكلاينت للإنتاج
+### 4. Build Client for Production
 
 ```bash
 cd web/client && npm run build
 ```
 
-### 5. تشغيل بـ PM2 (إنتاج)
+### 5. Run with PM2 (Production)
 
 ```bash
 pm2 start ecosystem.config.cjs
@@ -103,7 +101,7 @@ pm2 logs
 pm2 restart all
 ```
 
-## هيكل المشروع
+## Project Structure
 
 ```
 referral-bot/
@@ -122,16 +120,16 @@ referral-bot/
     └── client/           # React + Vite dashboard
 ```
 
-## تسجيل الدخول للويب
+## Web Login
 
-1. افتح الموقع → اضغط "افتح البوت وسجّل دخول"
-2. افتح البوت في تيليجرام → `/start`
-3. شارك رقم هاتفك (أول مرة فقط)
-4. الموقع يكتشف التأكيد تلقائياً ويوجهك للداشبورد
+1. Open website → Click "Open Bot and Login"
+2. Open bot in Telegram → `/start`
+3. Share phone number (first time only)
+4. Website automatically detects and redirects to dashboard
 
-لا حاجة لتسجيل دومين في BotFather.
+No need to register domain in BotFather.
 
-## إعادة تعيين كاملة (تطوير فقط)
+## Complete Reset (Development Only)
 
 ```bash
 node reset_bot.js
@@ -139,47 +137,47 @@ node reset_bot.js
 
 ---
 
-## 🛠️ سكريبتات Termux
+## 🛠️ Termux Scripts
 
-### `setup-termux.sh` - الإعداد الشامل
+### `setup-termux.sh` - Complete Setup
 ```bash
-bash setup-termux.sh        # قائمة تفاعلية
-bash setup-termux.sh --auto # تلقائي كامل
+bash setup-termux.sh        # Interactive menu
+bash setup-termux.sh --auto # Full automatic
 ```
 
-### `start-tunnel.sh` - فتح الويب للعموم
+### `start-tunnel.sh` - Open Web Publicly
 ```bash
 bash start-tunnel.sh
 ```
-خيارات:
-- LocalTunnel (سهل ومجاني)
+Options:
+- LocalTunnel (easy & free)
 - Serveo (SSH tunnel)
-- Ngrok (احترافي)
+- Ngrok (professional)
 
-### `manage.sh` - إدارة سريعة
+### `manage.sh` - Quick Management
 ```bash
 bash manage.sh
 ```
-يوفر:
-- عرض الحالة واللوجات
-- إعادة التشغيل/الإيقاف
-- نسخ احتياطي
-- تحديث من GitHub
-- تنظيف اللوجات
+Features:
+- Status and logs display
+- Restart/Stop services
+- Database backup
+- Update from GitHub
+- Clean logs
 
 ---
 
-## 📱 أوامر PM2 المفيدة
+## 📱 Useful PM2 Commands
 
 ```bash
-pm2 status              # حالة الخدمات
-pm2 logs                # عرض اللوجات المباشرة
-pm2 logs telegram-bot   # لوج البوت فقط
-pm2 logs web-server     # لوج الخادم فقط
-pm2 restart all         # إعادة تشغيل الكل
-pm2 stop all            # إيقاف الكل
-pm2 delete all          # حذف الكل
-pm2 flush               # مسح اللوجات
+pm2 status              # Service status
+pm2 logs                # View live logs
+pm2 logs telegram-bot   # Bot logs only
+pm2 logs web-server     # Server logs only
+pm2 restart all         # Restart all
+pm2 stop all            # Stop all
+pm2 delete all          # Delete all
+pm2 flush               # Clear logs
 ```
 
 ---

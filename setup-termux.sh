@@ -2,83 +2,70 @@
 
 # ================================================================
 # Telegram Bot Setup Script for Termux
-# سكريبت تثبيت وتشغيل بوت التليجرام على تيرمكس
+# Complete automated setup for Telegram bot on Termux
 # ================================================================
 
 set -e
 
-echo "🚀 بدء إعداد البوت على Termux..."
+echo "🚀 Starting Termux Bot Setup..."
 echo "================================"
 
-# ── التحقق من Termux ──
+# ── Verify Termux Environment ──
 if [ ! -d "/data/data/com.termux" ]; then
-    echo "❌ هذا السكريبت مصمم للعمل على Termux فقط!"
+    echo "❌ This script is designed for Termux only!"
     exit 1
 fi
 
-# ── تثبيت الحزم المطلوبة ──
+# ── Install Required Packages ──
 install_dependencies() {
     echo ""
-    echo "📦 تثبيت الحزم المطلوبة..."
+    echo "📦 Installing required packages..."
     
-    # تحديث قوائم الحزم
     pkg update -y
-    
-    # تثبيت الحزم الأساسية
     pkg install -y nodejs git python build-essential sqlite
     
-    # تثبيت PM2 عالمياً
     if ! command -v pm2 &> /dev/null; then
-        echo "📦 تثبيت PM2..."
+        echo "📦 Installing PM2..."
         npm install -g pm2
     else
-        echo "✅ PM2 مثبت مسبقاً"
+        echo "✅ PM2 already installed"
     fi
     
-    echo "✅ تم تثبيت جميع الحزم"
+    echo "✅ All packages installed"
 }
 
-# ── إعداد ملف .env ──
+# ── Setup .env File ──
 setup_env() {
     echo ""
-    echo "⚙️ إعداد متغيرات البيئة..."
+    echo "⚙️ Setting up environment variables..."
     
     if [ -f ".env" ]; then
-        echo "⚠️  ملف .env موجود بالفعل"
-        read -p "هل تريد إعادة إنشائه؟ (y/n): " recreate
+        echo "⚠️  .env file already exists"
+        read -p "Do you want to recreate it? (y/n): " recreate
         if [ "$recreate" != "y" ]; then
             return
         fi
     fi
     
     echo ""
-    echo "📝 من فضلك أدخل المعلومات التالية:"
+    echo "📝 Please enter the following information:"
     echo ""
     
-    # BOT_TOKEN
-    read -p "🤖 أدخل Bot Token من @BotFather: " BOT_TOKEN
+    read -p "🤖 Enter Bot Token from @BotFather: " BOT_TOKEN
+    read -p "📛 Enter Bot Name (without @): " BOT_NAME
+    read -p "👤 Enter Main Admin Telegram ID: " MAIN_ADMIN_ID
+    read -p "👥 Enter All Admin IDs (comma-separated): " ADMIN_IDS
     
-    # BOT_NAME
-    read -p "📛 أدخل اسم البوت (بدون @): " BOT_NAME
-    
-    # ADMIN_IDS
-    read -p "👤 أدخل Telegram ID للمشرف الرئيسي: " MAIN_ADMIN_ID
-    
-    read -p "👥 أدخل جميع IDs المشرفين (مفصولة بفاصلة): " ADMIN_IDS
-    
-    # Binance API (اختياري)
     echo ""
-    echo "🔑 Binance API (اضغط Enter للتخطي):"
+    echo "🔑 Binance API (press Enter to skip):"
     read -p "Binance API Key: " BINANCE_API_KEY
     read -p "Binance API Secret: " BINANCE_API_SECRET
     
-    # GitHub Backup (اختياري)
     echo ""
-    echo "📂 GitHub Backup (اضغط Enter للتخطي):"
+    echo "📂 GitHub Backup (press Enter to skip):"
     read -p "GitHub Token: " GITHUB_TOKEN
     read -p "GitHub Repo (username/repo): " GITHUB_REPO
     
-    # كتابة ملف .env
     cat > .env << EOF
 # Telegram Bot Configuration
 BOT_TOKEN=$BOT_TOKEN
@@ -96,27 +83,26 @@ GITHUB_BACKUP_TOKEN=$GITHUB_TOKEN
 GITHUB_BACKUP_REPO=$GITHUB_REPO
 EOF
     
-    echo "✅ تم إنشاء ملف .env"
+    echo "✅ .env file created"
 }
 
-# ── إعداد ملف .env للويب كلاينت ──
+# ── Setup Web Client .env ──
 setup_web_client_env() {
     echo ""
-    echo "🌐 إعداد Web Client..."
+    echo "🌐 Setting up Web Client..."
     
     if [ -f "web/client/.env" ]; then
-        echo "⚠️  ملف web/client/.env موجود بالفعل"
-        read -p "هل تريد إعادة إنشائه؟ (y/n): " recreate
+        echo "⚠️  web/client/.env already exists"
+        read -p "Do you want to recreate it? (y/n): " recreate
         if [ "$recreate" != "y" ]; then
             return
         fi
     fi
     
-    # قراءة BOT_NAME من ملف .env الرئيسي
     source .env
     
     echo ""
-    read -p "🌍 أدخل Domain المؤقت من LocalTunnel أو Serveo (مثال: https://xxx.loca.lt): " PUBLIC_DOMAIN
+    read -p "🌍 Enter public domain from LocalTunnel or Serveo (e.g., https://xxx.loca.lt): " PUBLIC_DOMAIN
     
     cat > web/client/.env << EOF
 # Web Client Configuration
@@ -124,66 +110,59 @@ VITE_BOT_NAME=$BOT_NAME
 VITE_API_URL=${PUBLIC_DOMAIN}/api
 EOF
     
-    echo "✅ تم إنشاء ملف web/client/.env"
+    echo "✅ web/client/.env created"
 }
 
-# ── تثبيت Dependencies ──
+# ── Install Node Dependencies ──
 install_node_packages() {
     echo ""
-    echo "📦 تثبيت حزم Node.js..."
+    echo "📦 Installing Node.js packages..."
     
-    # Root packages
-    echo "📦 تثبيت حزم المشروع الرئيسي..."
+    echo "📦 Installing root packages..."
     npm install
     
-    # Web server packages
     if [ -d "web/server" ]; then
-        echo "📦 تثبيت حزم الخادم..."
-        cd web/server
-        npm install
-        cd ../..
+        echo "📦 Installing server packages..."
+        cd web/server && npm install && cd ../..
     fi
     
-    # Web client packages
     if [ -d "web/client" ]; then
-        echo "📦 تثبيت حزم الواجهة..."
-        cd web/client
-        npm install
-        cd ../..
+        echo "📦 Installing client packages..."
+        cd web/client && npm install && cd ../..
     fi
     
-    echo "✅ تم تثبيت جميع الحزم"
+    echo "✅ All packages installed"
 }
 
-# ── بناء Web Client ──
+# ── Build Web Client ──
 build_client() {
     echo ""
-    echo "🔨 بناء واجهة الويب..."
+    echo "🔨 Building web client..."
     
     if [ -d "web/client" ]; then
         cd web/client
         npm run build
         cd ../..
-        echo "✅ تم بناء الواجهة"
+        echo "✅ Client built successfully"
     fi
 }
 
-# ── إعداد قاعدة البيانات ──
+# ── Setup Database ──
 setup_database() {
     echo ""
-    echo "🗄️ إعداد قاعدة البيانات..."
+    echo "🗄️ Setting up database..."
     
     if [ -f "bot.db" ]; then
-        echo "⚠️  قاعدة البيانات موجودة بالفعل"
+        echo "⚠️  Database already exists"
     else
-        echo "✅ سيتم إنشاء قاعدة البيانات عند التشغيل الأول"
+        echo "✅ Database will be created on first run"
     fi
 }
 
-# ── إنشاء ملف PM2 Ecosystem ──
+# ── Create PM2 Ecosystem File ──
 create_pm2_config() {
     echo ""
-    echo "⚙️ إنشاء ملف PM2 Config..."
+    echo "⚙️ Creating PM2 config..."
     
     cat > ecosystem.config.cjs << 'EOF'
 module.exports = {
@@ -225,84 +204,77 @@ module.exports = {
 };
 EOF
     
-    echo "✅ تم إنشاء ملف PM2 Config"
+    echo "✅ PM2 config created"
 }
 
-# ── إنشاء مجلد اللوجات ──
+# ── Create Logs Directory ──
 create_logs_dir() {
     echo ""
-    echo "📁 إنشاء مجلد اللوجات..."
+    echo "📁 Creating logs directory..."
     mkdir -p logs
-    echo "✅ تم إنشاء مجلد اللوجات"
+    echo "✅ Logs directory created"
 }
 
-# ── تثبيت LocalTunnel ──
+# ── Install LocalTunnel ──
 install_tunnel() {
     echo ""
-    echo "🌐 تثبيت LocalTunnel للحصول على Domain مؤقت..."
+    echo "🌐 Installing LocalTunnel for public domain..."
     
     if ! command -v lt &> /dev/null; then
         npm install -g localtunnel
-        echo "✅ تم تثبيت LocalTunnel"
+        echo "✅ LocalTunnel installed"
     else
-        echo "✅ LocalTunnel مثبت مسبقاً"
+        echo "✅ LocalTunnel already installed"
     fi
 }
 
-# ── بدء التشغيل ──
+# ── Start Services ──
 start_services() {
     echo ""
-    echo "🚀 بدء تشغيل الخدمات..."
+    echo "🚀 Starting services..."
     
-    # إيقاف أي عمليات قديمة
     pm2 delete all 2>/dev/null || true
-    
-    # بدء التشغيل
     pm2 start ecosystem.config.cjs
-    
-    # حفظ الإعدادات
     pm2 save
-    
-    # إعداد بدء التشغيل التلقائي
     pm2 startup
     
     echo ""
-    echo "✅ تم بدء الخدمات بنجاح!"
+    echo "✅ Services started successfully!"
     echo ""
-    echo "📊 حالة الخدمات:"
+    echo "📊 Service Status:"
     pm2 status
     
     echo ""
-    echo "🌐 لفتح Web Dashboard على الإنترنت، قم بتشغيل:"
+    echo "🌐 To open Web Dashboard publicly, run:"
     echo "   lt --port 3001 --subdomain your-custom-name"
     echo ""
-    echo "📝 أوامر مفيدة:"
-    echo "   pm2 status          - عرض حالة الخدمات"
-    echo "   pm2 logs            - عرض اللوجات"
-    echo "   pm2 restart all     - إعادة تشغيل جميع الخدمات"
-    echo "   pm2 stop all        - إيقاف جميع الخدمات"
-    echo "   pm2 delete all      - حذف جميع الخدمات"
+    echo "📝 Useful Commands:"
+    echo "   pm2 status          - Show service status"
+    echo "   pm2 logs            - Show logs"
+    echo "   pm2 restart all     - Restart services"
+    echo "   pm2 stop all        - Stop services"
+    echo "   pm2 delete all      - Remove services"
 }
 
-# ── القائمة الرئيسية ──
+# ── Main Menu ──
 main_menu() {
     echo ""
     echo "================================"
-    echo "   🤖 إعداد بوت التليجرام"
+    echo "   🤖 Telegram Bot Setup"
     echo "================================"
     echo ""
-    echo "اختر أحد الخيارات:"
-    echo "1. تثبيت كامل (جديد)"
-    echo "2. تحديث الإعدادات فقط (.env)"
-    echo "3. إعادة بناء الواجهة"
-    echo "4. بدء الخدمات"
-    echo "5. إيقاف الخدمات"
-    echo "6. حالة الخدمات"
-    echo "7. عرض اللوجات"
-    echo "8. فتح نفق عام (LocalTunnel)"
-    echo "0. خروج"
+    echo "Choose an option:"
+    echo "1. Full installation (new setup)"
+    echo "2. Update configuration only (.env)"
+    echo "3. Rebuild web client"
+    echo "4. Start services"
+    echo "5. Stop services"
+    echo "6. Show service status"
+    echo "7. Show logs"
+    echo "8. Open public tunnel (LocalTunnel)"
+    echo "0. Exit"
     echo ""
-    read -p "اختيارك: " choice
+    read -p "Your choice: " choice
     
     case $choice in
         1)
@@ -320,7 +292,7 @@ main_menu() {
         2)
             setup_env
             setup_web_client_env
-            echo "✅ تم تحديث الإعدادات. أعد تشغيل الخدمات لتطبيق التغييرات."
+            echo "✅ Configuration updated. Restart services to apply changes."
             ;;
         3)
             build_client
@@ -331,7 +303,7 @@ main_menu() {
             ;;
         5)
             pm2 stop all
-            echo "✅ تم إيقاف جميع الخدمات"
+            echo "✅ All services stopped"
             ;;
         6)
             pm2 status
@@ -341,7 +313,7 @@ main_menu() {
             ;;
         8)
             echo ""
-            read -p "أدخل اسم فرعي مخصص (أو اتركه فارغاً): " subdomain
+            read -p "Enter custom subdomain (or leave empty): " subdomain
             if [ -z "$subdomain" ]; then
                 lt --port 3001
             else
@@ -349,19 +321,18 @@ main_menu() {
             fi
             ;;
         0)
-            echo "👋 إلى اللقاء!"
+            echo "👋 Goodbye!"
             exit 0
             ;;
         *)
-            echo "❌ اختيار غير صحيح"
+            echo "❌ Invalid choice"
             main_menu
             ;;
     esac
 }
 
-# ── التشغيل ──
+# ── Execute ──
 if [ "$1" == "--auto" ]; then
-    # تثبيت تلقائي كامل
     install_dependencies
     setup_env
     install_node_packages
@@ -373,9 +344,8 @@ if [ "$1" == "--auto" ]; then
     install_tunnel
     start_services
 else
-    # قائمة تفاعلية
     main_menu
 fi
 
 echo ""
-echo "✅ تم الانتهاء!"
+echo "✅ Done!"
