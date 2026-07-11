@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}[1/5] Checking Node.js...${NC}"
 if ! command -v node &> /dev/null; then
     echo -e "${RED}[ERROR] Node.js not found. Installing...${NC}"
-    pkg install nodejs -y
+    apt install nodejs -y
 fi
 echo -e "${GREEN}✓ Node.js: $(node -v)${NC}"
 echo ""

@@ -20,10 +20,10 @@
 termux-setup-storage
 
 # تحديث الباكجات
-pkg update -y && pkg upgrade -y
+apt update -y && apt upgrade -y
 
 # تثبيت Node.js و Git
-pkg install nodejs git -y
+apt install nodejs git -y
 
 # تثبيت PM2
 npm install -g pm2
@@ -249,7 +249,7 @@ ssh -R 80:localhost:3001 serveo.net
 ### 3. Cloudflare Tunnel:
 ```bash
 # تثبيت
-pkg install cloudflared
+apt install cloudflared
 
 # تشغيل
 cloudflared tunnel --url http://localhost:3001
@@ -321,7 +321,7 @@ LocalTunnel عام بالكامل! لذلك:
 ```bash
 # Termux لا يحتاج جدار ناري (محمي بواسطة Android)
 # لكن تأكد من تحديث الباكجات
-pkg upgrade
+apt upgrade
 ```
 
 ---
@@ -365,7 +365,7 @@ pm2 delete all
 
 - [ ] تثبيت Termux من F-Droid
 - [ ] تشغيل `termux-setup-storage`
-- [ ] تثبيت Node.js: `pkg install nodejs`
+- [ ] تثبيت Node.js: `apt install nodejs`
 - [ ] تثبيت PM2: `npm install -g pm2`
 - [ ] تثبيت LocalTunnel: `npm install -g localtunnel`
 - [ ] إعداد ملفات `.env` (البوت والخادم والعميل)

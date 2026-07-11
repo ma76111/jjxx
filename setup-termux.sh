@@ -12,17 +12,17 @@ echo ""
 
 # Update packages
 echo "[1/4] Updating Termux packages..."
-pkg update -y && pkg upgrade -y
+apt update -y && apt upgrade -y
 
 # Install Node.js
 echo ""
 echo "[2/4] Installing Node.js..."
-pkg install nodejs -y
+apt install nodejs -y
 
 # Install Git (if needed)
 echo ""
 echo "[3/4] Installing Git..."
-pkg install git -y
+apt install git -y
 
 # Install PM2 globally
 echo ""
