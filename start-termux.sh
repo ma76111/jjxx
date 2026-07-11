@@ -47,7 +47,8 @@ echo "🖥️  تشغيل الخادم..."
 pm2 start web/server/index.js --name server
 
 echo "⚛️  تشغيل العميل..."
-cd web/client && pm2 start npm --name client -- run dev -- --host 0.0.0.0 && cd ../..
+chmod +x web/client/start-dev.sh
+pm2 start web/client/start-dev.sh --name client --interpreter bash
 
 pm2 save
 

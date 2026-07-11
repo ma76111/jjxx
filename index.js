@@ -40,9 +40,38 @@ await seedDatabase();
 
 logger.info('[Bot] Starting Telegram bot...');
 
-const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });
+const bot = new TelegramBot(config.BOT_TOKEN, { 
+  polling: {
+    interval: 2000,
+    autoStart: true,
+    params: {
+      timeout: 10
+    }
+  },
+  request: {
+    agentClass: undefined,
+    agentOptions: {},
+    timeout: 30000
+  }
+});
 
-bot.on('polling_error', (err) => logger.error('[Bot] Polling error:', { err: err.message }));
+bot.on('polling_error', (err) => {
+  logger.error('[Bot] Polling error:', err.message);
+  // Auto-restart polling after error
+  if (err.code === 'EFATAL' || err.code === 'ETIMEDOUT') {
+    logger.info('[Bot] Attempting to restart polling...');
+    setTimeout(() => {
+      try {
+        bot.stopPolling().then(() => {
+          bot.startPolling();
+          logger.info('[Bot] Polling restarted successfully');
+        }).catch(e => logger.error('[Bot] Failed to restart polling:', e.message));
+      } catch (restartErr) {
+        logger.error('[Bot] Restart error:', restartErr.message);
+      }
+    }, 5000);
+  }
+});
 
 // ============================================================
 // /start
