@@ -2,9 +2,6 @@
 
 بوت تيليجرام لتبادل الإحالات وتنفيذ المهام المدفوعة + لوحة ويب للمستخدمين والأدمن.
 
-> **🔧 إصلاحات تيرمكس الجديدة!**  
-> تم حل مشاكل ETIMEDOUT و Babel errors. راجع [`QUICK_FIX_AR.md`](QUICK_FIX_AR.md) للتطبيق السريع.
-
 ## المتطلبات
 
 - Node.js 20+
@@ -123,41 +120,3 @@ referral-bot/
 ```bash
 node reset_bot.js
 ```
-
----
-
-## 📱 التشغيل على Termux
-
-للتشغيل على هاتف Android بـ Termux مع PM2:
-
-### الإعداد الأول:
-```bash
-# تثبيت المتطلبات
-pkg update && pkg upgrade
-pkg install nodejs git python
-npm install -g pm2
-
-# استنساخ ونسخ .env
-git clone <repo-url>
-cd egypt-easy-cash-bot
-cp .env.example .env
-# عدّل .env وأضف BOT_TOKEN
-```
-
-### التشغيل:
-```bash
-chmod +x start-termux.sh
-./start-termux.sh
-```
-
-### حل المشاكل:
-```bash
-chmod +x fix-termux.sh
-./fix-termux.sh
-```
-
-**📖 للتفاصيل الكاملة:** راجع [`TERMUX_GUIDE.md`](TERMUX_GUIDE.md)  
-**🔧 حل المشاكل:** راجع [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)  
-**🚀 الإصلاحات الأخيرة:** راجع [`QUICK_FIX_AR.md`](QUICK_FIX_AR.md)
-
----
