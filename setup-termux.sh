@@ -21,8 +21,8 @@ install_dependencies() {
     echo ""
     echo "📦 Installing required packages..."
     
-    pkg update -y
-    pkg install -y nodejs git python build-essential sqlite
+    apt update -y
+    apt install -y nodejs git python build-essential sqlite
     
     if ! command -v pm2 &> /dev/null; then
         echo "📦 Installing PM2..."
