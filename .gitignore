@@ -1,8 +1,60 @@
+# Dependencies
 node_modules/
+web/server/node_modules/
+web/client/node_modules/
+
+# Environment variables (IMPORTANT - لا ترفع البيانات السرية!)
 .env
-bot.db
-backups/
 web/server/.env
 web/client/.env
-web/client/dist/
+*.env.local
+*.env.*.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+bot.db*
+
+# Backups
+backups/
+*.backup
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+web/client/dist/
+web/client/build/
+
+# PM2
+.pm2/
+pids/
+*.pid
+*.seed
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Package lock files (اختياري - حسب تفضيلك)
+# package-lock.json
+# web/server/package-lock.json
+# web/client/package-lock.json
