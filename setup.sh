@@ -2,7 +2,6 @@
 
 # ================================================================
 # Referral Bot - Interactive Setup Script
-# سكريبت إعداد تفاعلي يطلب جميع المعلومات المطلوبة
 # ================================================================
 
 clear
@@ -11,11 +10,11 @@ echo "║     🤖 Referral Bot - Setup Wizard            ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
 
-# ── التحقق من Node.js ──────────────────────────────────
+# Check Node.js
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js غير مثبت!"
+    echo "❌ Node.js is not installed!"
     echo ""
-    echo "للتثبيت:"
+    echo "To install:"
     echo "  • Windows: https://nodejs.org"
     echo "  • Termux: pkg install nodejs"
     echo "  • Linux: sudo apt install nodejs npm"
@@ -25,7 +24,7 @@ fi
 echo "✅ Node.js: $(node -v)"
 echo ""
 
-# ── دالة للقراءة مع قيمة افتراضية ──────────────────────
+# Read input with default value
 read_with_default() {
     local prompt="$1"
     local default="$2"
@@ -40,80 +39,80 @@ read_with_default() {
     fi
 }
 
-# ── دالة لتوليد JWT Secret عشوائي ──────────────────────
+# Generate random JWT Secret
 generate_jwt_secret() {
     if command -v openssl &> /dev/null; then
         openssl rand -base64 32
     else
-        # Fallback: استخدام /dev/urandom
+        # Fallback: use /dev/urandom
         cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 43
     fi
 }
 
 echo "════════════════════════════════════════════════"
-echo "  📋 معلومات البوت الأساسية"
+echo "  📋 Bot Configuration"
 echo "════════════════════════════════════════════════"
 echo ""
 
-# ── BOT_TOKEN ───────────────────────────────────────────
+# BOT_TOKEN
 echo "🔑 1. Bot Token"
-echo "   احصل عليه من: @BotFather على Telegram"
-echo "   /newbot → اتبع الخطوات"
+echo "   Get it from: @BotFather on Telegram"
+echo "   /newbot → Follow the steps"
 echo ""
-BOT_TOKEN=$(read_with_default "أدخل BOT_TOKEN" "")
+BOT_TOKEN=$(read_with_default "Enter BOT_TOKEN" "")
 
 while [ -z "$BOT_TOKEN" ]; do
-    echo "❌ BOT_TOKEN مطلوب!"
-    BOT_TOKEN=$(read_with_default "أدخل BOT_TOKEN" "")
+    echo "❌ BOT_TOKEN is required!"
+    BOT_TOKEN=$(read_with_default "Enter BOT_TOKEN" "")
 done
 
-# ── BOT_NAME ────────────────────────────────────────────
+# BOT_NAME
 echo ""
-echo "📛 2. Bot Username (بدون @)"
-echo "   مثال: my_referral_bot"
+echo "📛 2. Bot Username (without @)"
+echo "   Example: my_referral_bot"
 echo ""
-BOT_NAME=$(read_with_default "أدخل BOT_NAME" "")
+BOT_NAME=$(read_with_default "Enter BOT_NAME" "")
 
 while [ -z "$BOT_NAME" ]; do
-    echo "❌ BOT_NAME مطلوب!"
-    BOT_NAME=$(read_with_default "أدخل BOT_NAME" "")
+    echo "❌ BOT_NAME is required!"
+    BOT_NAME=$(read_with_default "Enter BOT_NAME" "")
 done
 
-# ── MAIN_ADMIN_ID ───────────────────────────────────────
+# MAIN_ADMIN_ID
 echo ""
-echo "👤 3. Your Telegram User ID (الأدمن الرئيسي)"
-echo "   احصل عليه من: @userinfobot"
-echo "   أرسل /start وسيعطيك الـ ID"
+echo "👤 3. Your Telegram User ID (Main Admin)"
+echo "   Get it from: @userinfobot"
+echo "   Send /start and it will give you the ID"
 echo ""
-MAIN_ADMIN_ID=$(read_with_default "أدخل MAIN_ADMIN_ID" "")
+MAIN_ADMIN_ID=$(read_with_default "Enter MAIN_ADMIN_ID" "")
 
 while [ -z "$MAIN_ADMIN_ID" ]; do
-    echo "❌ MAIN_ADMIN_ID مطلوب!"
-    MAIN_ADMIN_ID=$(read_with_default "أدخل MAIN_ADMIN_ID" "")
+    echo "❌ MAIN_ADMIN_ID is required!"
+    MAIN_ADMIN_ID=$(read_with_default "Enter MAIN_ADMIN_ID" "")
 done
 
-# ── ADMIN_IDS (Optional) ────────────────────────────────
+# ADMIN_IDS (Optional)
 echo ""
-echo "👥 4. Admin IDs إضافيين (اختياري)"
-echo "   افصل بفاصلة: 123456,789012"
+echo "👥 4. Additional Admin IDs (Optional)"
+echo "   Separate with comma: 123456,789012"
 echo ""
-ADMIN_IDS=$(read_with_default "أدخل ADMIN_IDS" "")
+ADMIN_IDS=$(read_with_default "Enter ADMIN_IDS" "")
 
-# ── JWT_SECRET ──────────────────────────────────────────
+# JWT_SECRET
 echo ""
 echo "🔐 5. JWT Secret"
-echo "   سيتم توليد سلسلة عشوائية آمنة..."
+echo "   Generating a secure random string..."
 JWT_SECRET=$(generate_jwt_secret)
-echo "   ✅ تم التوليد: ${JWT_SECRET:0:20}..."
+echo "   ✅ Generated: ${JWT_SECRET:0:20}..."
 
-# ── Optional: Binance API ───────────────────────────────
+# Optional: Binance API
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  💰 Binance API (اختياري - للتحقق التلقائي)"
+echo "  💰 Binance API (Optional - Auto verification)"
 echo "════════════════════════════════════════════════"
 echo ""
-echo "هل تريد إضافة Binance API Keys؟ (y/n)"
-read -p "الاختيار [n]: " use_binance
+echo "Do you want to add Binance API Keys? (y/n)"
+read -p "Choice [n]: " use_binance
 use_binance=${use_binance:-n}
 
 if [[ "$use_binance" =~ ^[Yy]$ ]]; then
@@ -124,14 +123,14 @@ else
     BINANCE_API_SECRET=""
 fi
 
-# ── Optional: GitHub Backup ─────────────────────────────
+# Optional: GitHub Backup
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  💾 GitHub Backup (اختياري)"
+echo "  💾 GitHub Backup (Optional)"
 echo "════════════════════════════════════════════════"
 echo ""
-echo "هل تريد تفعيل النسخ الاحتياطي على GitHub؟ (y/n)"
-read -p "الاختيار [n]: " use_github
+echo "Do you want to enable GitHub backup? (y/n)"
+read -p "Choice [n]: " use_github
 use_github=${use_github:-n}
 
 if [[ "$use_github" =~ ^[Yy]$ ]]; then
@@ -142,43 +141,43 @@ else
     GITHUB_BACKUP_REPO=""
 fi
 
-# ── Network Settings ────────────────────────────────────
+# Network Settings
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  🌐 إعدادات الشبكة"
+echo "  🌐 Network Settings"
 echo "════════════════════════════════════════════════"
 echo ""
 
-# تحديد إذا كان Termux أو لا
+# Detect Termux
 if [ -d "/data/data/com.termux" ]; then
-    echo "📱 تم اكتشاف Termux"
-    # الحصول على IP التلقائي
+    echo "📱 Termux detected"
+    # Get local IP automatically
     LOCAL_IP=$(ip addr show wlan0 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1 | head -n1)
     [ -z "$LOCAL_IP" ] && LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}')
     [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
     
-    echo "   IP المحلي: $LOCAL_IP"
+    echo "   Local IP: $LOCAL_IP"
     WEB_PORT="3001"
     CLIENT_PORT="5173"
     CLIENT_ORIGIN="http://${LOCAL_IP}:${CLIENT_PORT}"
     API_URL="http://${LOCAL_IP}:${WEB_PORT}/api"
 else
-    echo "💻 تم اكتشاف Desktop/Server"
+    echo "💻 Desktop/Server detected"
     WEB_PORT=$(read_with_default "Web Server Port" "3001")
     CLIENT_PORT=$(read_with_default "Client Port" "5173")
     CLIENT_ORIGIN="http://localhost:${CLIENT_PORT}"
     API_URL="http://localhost:${WEB_PORT}/api"
 fi
 
-# ── إنشاء ملفات .env ────────────────────────────────────
+# Create .env files
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  📝 إنشاء ملفات الإعدادات..."
+echo "  📝 Creating configuration files..."
 echo "════════════════════════════════════════════════"
 echo ""
 
 # 1. Root .env
-echo "📄 1/3 إنشاء .env..."
+echo "📄 1/3 Creating .env..."
 cat > .env << EOF
 # Telegram Bot Configuration
 BOT_TOKEN=$BOT_TOKEN
@@ -201,7 +200,7 @@ GITHUB_BACKUP_REPO=$GITHUB_BACKUP_REPO
 EOF
 
 # 2. Web Server .env
-echo "📄 2/3 إنشاء web/server/.env..."
+echo "📄 2/3 Creating web/server/.env..."
 cat > web/server/.env << EOF
 # Telegram Bot
 BOT_TOKEN=$BOT_TOKEN
@@ -219,7 +218,7 @@ MAIN_ADMIN_ID=$MAIN_ADMIN_ID
 EOF
 
 # 3. Web Client .env
-echo "📄 3/3 إنشاء web/client/.env..."
+echo "📄 3/3 Creating web/client/.env..."
 cat > web/client/.env << EOF
 # Bot Name
 VITE_BOT_NAME=$BOT_NAME
@@ -229,12 +228,12 @@ VITE_API_URL=$API_URL
 EOF
 
 echo ""
-echo "✅ تم إنشاء جميع ملفات الإعدادات!"
+echo "✅ All configuration files created!"
 echo ""
 
-# ── تثبيت التبعيات ──────────────────────────────────────
+# Install dependencies
 echo "════════════════════════════════════════════════"
-echo "  📦 تثبيت التبعيات..."
+echo "  📦 Installing dependencies..."
 echo "════════════════════════════════════════════════"
 echo ""
 
@@ -243,33 +242,33 @@ install_deps() {
     local name=$2
     
     if [ ! -d "$dir/node_modules" ]; then
-        echo "📦 تثبيت $name..."
+        echo "📦 Installing $name..."
         cd "$dir"
-        npm install --silent 2>&1 | grep -E "(error|warn)" || echo "   ✅ تم التثبيت"
+        npm install --silent 2>&1 | grep -E "(error|warn)" || echo "   ✅ Installed"
         cd - > /dev/null
     else
-        echo "✅ $name - التبعيات مثبتة مسبقاً"
+        echo "✅ $name - dependencies already installed"
     fi
 }
 
-install_deps "." "البوت الرئيسي"
-install_deps "web/server" "الخادم"
-install_deps "web/client" "العميل"
+install_deps "." "Main Bot"
+install_deps "web/server" "Web Server"
+install_deps "web/client" "Web Client"
 
-# ── إنشاء مجلدات ─────────────────────────────────────────
+# Create directories
 echo ""
-echo "📁 إنشاء المجلدات المطلوبة..."
+echo "📁 Creating required directories..."
 mkdir -p logs
 mkdir -p backups
-echo "   ✅ تم"
+echo "   ✅ Done"
 
-# ── الملخص النهائي ──────────────────────────────────────
+# Final Summary
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  ✅ اكتمل الإعداد بنجاح!"
+echo "  ✅ Setup completed successfully!"
 echo "════════════════════════════════════════════════"
 echo ""
-echo "📋 ملخص الإعدادات:"
+echo "📋 Configuration Summary:"
 echo "   • Bot: @$BOT_NAME"
 echo "   • Admin ID: $MAIN_ADMIN_ID"
 echo "   • Web Server: Port $WEB_PORT"
@@ -281,19 +280,19 @@ else
 fi
 echo ""
 echo "════════════════════════════════════════════════"
-echo "  🚀 خطوات التشغيل:"
+echo "  🚀 How to start:"
 echo "════════════════════════════════════════════════"
 echo ""
 
 if [ -d "/data/data/com.termux" ]; then
-    echo "على Termux:"
+    echo "On Termux:"
     echo "  chmod +x start-termux.sh"
     echo "  ./start-termux.sh"
 else
-    echo "على Windows:"
+    echo "On Windows:"
     echo "  start.bat"
     echo ""
-    echo "على Linux/Mac:"
+    echo "On Linux/Mac:"
     echo "  pm2 start ecosystem.config.cjs"
 fi
 
