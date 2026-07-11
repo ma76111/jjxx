@@ -1,0 +1,22 @@
+{
+  "name": "referral-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Referral & Paid-Tasks Telegram Bot + Web Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "launch": "node index.js & node web/server/index.js",
+    "reset": "node reset_bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "0.66.0",
+    "sqlite3": "5.1.7",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
+    "node-cron": "^3.0.3",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {}
+}

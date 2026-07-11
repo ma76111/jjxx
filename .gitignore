@@ -1,0 +1,8 @@
+node_modules/
+.env
+bot.db
+backups/
+web/server/.env
+web/client/.env
+web/client/dist/
+*.log
