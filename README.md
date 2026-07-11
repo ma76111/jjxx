@@ -1,13 +1,29 @@
-# Referral & Paid-Tasks Bot
+# 🤖 Referral & Paid-Tasks Bot
 
 بوت تيليجرام لتبادل الإحالات وتنفيذ المهام المدفوعة + لوحة ويب للمستخدمين والأدمن.
 
-## المتطلبات
+---
+
+## 🚀 التشغيل السريع على Termux
+
+**أسهل طريقة! أمر واحد فقط:**
+
+```bash
+pkg update -y && pkg install -y git nodejs && git clone https://github.com/ma76111/jjxx.git && cd jjxx && bash setup-termux.sh
+```
+
+📖 **دليل Termux:** [QUICKSTART_TERMUX.md](./QUICKSTART_TERMUX.md) | [TERMUX_SETUP.md](./TERMUX_SETUP.md)
+
+---
+
+## 💻 التشغيل على Windows/Linux/Mac
+
+### المتطلبات
 
 - Node.js 20+
 - npm 10+
 
-## الإعداد السريع
+### الإعداد السريع
 
 ### 1. تثبيت الاعتماديات
 
@@ -120,3 +136,50 @@ referral-bot/
 ```bash
 node reset_bot.js
 ```
+
+---
+
+## 🛠️ سكريبتات Termux
+
+### `setup-termux.sh` - الإعداد الشامل
+```bash
+bash setup-termux.sh        # قائمة تفاعلية
+bash setup-termux.sh --auto # تلقائي كامل
+```
+
+### `start-tunnel.sh` - فتح الويب للعموم
+```bash
+bash start-tunnel.sh
+```
+خيارات:
+- LocalTunnel (سهل ومجاني)
+- Serveo (SSH tunnel)
+- Ngrok (احترافي)
+
+### `manage.sh` - إدارة سريعة
+```bash
+bash manage.sh
+```
+يوفر:
+- عرض الحالة واللوجات
+- إعادة التشغيل/الإيقاف
+- نسخ احتياطي
+- تحديث من GitHub
+- تنظيف اللوجات
+
+---
+
+## 📱 أوامر PM2 المفيدة
+
+```bash
+pm2 status              # حالة الخدمات
+pm2 logs                # عرض اللوجات المباشرة
+pm2 logs telegram-bot   # لوج البوت فقط
+pm2 logs web-server     # لوج الخادم فقط
+pm2 restart all         # إعادة تشغيل الكل
+pm2 stop all            # إيقاف الكل
+pm2 delete all          # حذف الكل
+pm2 flush               # مسح اللوجات
+```
+
+---
