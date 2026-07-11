@@ -24,6 +24,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 // Init shared DB
 initDb();
 
+// Trust proxy for tunneling services (LocalTunnel, Ngrok, etc.)
+app.set('trust proxy', true);
+
 // Security middlewares
 app.use(helmet({
   contentSecurityPolicy: {
@@ -37,7 +40,28 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: CLIENT_ORIGIN,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost and configured origin
+    const allowedOrigins = [
+      CLIENT_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ];
+    
+    // Allow any loca.lt, ngrok.io, or serveo.net domain
+    if (origin.includes('loca.lt') || origin.includes('ngrok.io') || origin.includes('serveo.net')) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now (tunneling)
+    }
+  },
   credentials: true,
 }));
 
