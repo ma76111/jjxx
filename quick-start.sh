@@ -241,7 +241,8 @@ PM2_HOME=/root/.pm2 pm2 start web/server/index.js --name "web-server"
 
 # Start ngrok
 echo "Starting ngrok tunnel..."
-PM2_HOME=/root/.pm2 pm2 start "ngrok http $WEB_PORT" --name "ngrok-tunnel"
+chmod +x start-ngrok.sh
+PM2_HOME=/root/.pm2 pm2 start ./start-ngrok.sh --name "ngrok-tunnel" -- $WEB_PORT
 
 # Save PM2 config
 PM2_HOME=/root/.pm2 pm2 save
