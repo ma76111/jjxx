@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = join(__dirname, '..', '..', '..', 'bot.db');
@@ -12,13 +12,21 @@ let db = null;
 export function initDb() {
   if (db) return db;
 
+  // Check if database file exists
+  if (!existsSync(DB_PATH)) {
+    console.error('[DB/Server] Database not found at:', DB_PATH);
+    console.error('[DB/Server] Please run the bot first to create the database');
+    process.exit(1);
+  }
+
   const { Database } = sqlite3;
   db = new Database(DB_PATH, (err) => {
     if (err) {
-      console.error('[DB/Server] Failed to open:', err.message);
+      console.error('[DB/Server] Failed to connect to database:', err.message);
+      console.error('[DB/Server] Database path:', DB_PATH);
       process.exit(1);
     }
-    console.log('[DB/Server] Connected to shared bot.db');
+    console.log('[DB/Server] Connected to shared bot.db at:', DB_PATH);
   });
 
   db.exec('PRAGMA journal_mode = WAL;');
