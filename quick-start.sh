@@ -97,8 +97,9 @@ WEB_PORT=${WEB_PORT_INPUT:-3001}
 
 # ngrok Auth Token
 echo ""
-echo -n "Enter your NGROK_AUTH_TOKEN: "
-read NGROK_AUTH_TOKEN
+echo "Note: We'll use LocalTunnel (free, no token needed)"
+echo "If you prefer ngrok, you can configure it later"
+NGROK_AUTH_TOKEN=""
 
 echo ""
 echo -e "${GREEN}✓ Configuration collected${NC}"
@@ -215,18 +216,9 @@ echo -e "${GREEN}✓ Client built successfully${NC}"
 echo ""
 
 # ════════════════════════════════════════════════
-# STEP 5: CONFIGURE NGROK
+# STEP 5: START SERVICES
 # ════════════════════════════════════════════════
-echo -e "${BLUE}[STEP 5/6] Configuring ngrok${NC}"
-
-ngrok config add-authtoken $NGROK_AUTH_TOKEN
-echo -e "${GREEN}✓ ngrok configured${NC}"
-echo ""
-
-# ════════════════════════════════════════════════
-# STEP 6: START SERVICES
-# ════════════════════════════════════════════════
-echo -e "${BLUE}[STEP 6/6] Starting services${NC}"
+echo -e "${BLUE}[STEP 5/5] Starting services${NC}"
 
 # Stop existing processes
 pm2 delete all 2>/dev/null || true
@@ -239,10 +231,13 @@ PM2_HOME=/root/.pm2 pm2 start index.js --name "referral-bot"
 echo "Starting web server..."
 PM2_HOME=/root/.pm2 pm2 start web/server/index.js --name "web-server"
 
-# Start ngrok
-echo "Starting ngrok tunnel..."
-chmod +x start-ngrok.sh
-PM2_HOME=/root/.pm2 pm2 start ./start-ngrok.sh --name "ngrok-tunnel" -- $WEB_PORT
+# Start tunnel (LocalTunnel - more stable on Termux)
+echo "Starting tunnel..."
+if ! command -v lt &> /dev/null; then
+    echo "Installing localtunnel..."
+    npm install -g localtunnel --unsafe-perm=true --allow-root
+fi
+PM2_HOME=/root/.pm2 pm2 start "lt --port $WEB_PORT" --name "tunnel"
 
 # Save PM2 config
 PM2_HOME=/root/.pm2 pm2 save
@@ -267,14 +262,12 @@ echo "  Access URLs"
 echo "================================================"
 echo -e "${GREEN}Local API:${NC}    http://localhost:$WEB_PORT/health"
 echo ""
-echo -e "${YELLOW}Getting ngrok URL...${NC}"
+echo -e "${YELLOW}Getting tunnel URL...${NC}"
 sleep 2
-NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o '"public_url":"https://[^"]*' | head -1 | cut -d'"' -f4)
-if [ -z "$NGROK_URL" ]; then
-  echo -e "${YELLOW}Run 'pm2 logs ngrok-tunnel' to see the ngrok URL${NC}"
-else
-  echo -e "${GREEN}Public URL:${NC}   $NGROK_URL"
-fi
+echo -e "${GREEN}Public URL:${NC}"
+PM2_HOME=/root/.pm2 pm2 logs tunnel --lines 10 --nostream | grep -o "https://.*\.loca\.lt" | head -1
+echo ""
+echo -e "${YELLOW}Tip:${NC}  Run 'pm2 logs tunnel' to see the URL anytime"
 echo "================================================"
 echo ""
 
@@ -284,11 +277,10 @@ echo ""
 echo "Useful commands:"
 echo "  pm2 list                    - Show all processes"
 echo "  pm2 logs                    - Show all logs"
-echo "  pm2 logs ngrok-tunnel       - See ngrok URL"
+echo "  pm2 logs tunnel             - See tunnel URL"
 echo "  pm2 restart all             - Restart services"
 echo "  pm2 stop all                - Stop services"
 echo "  pm2 delete all              - Delete processes"
-echo "  curl http://localhost:4040/api/tunnels | grep public_url  - Get ngrok URL"
 echo ""
 echo -e "${GREEN}✓ Setup complete! Your bot is running!${NC}"
 echo ""
