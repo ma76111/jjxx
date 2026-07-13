@@ -1,0 +1,15 @@
+✅ تم إصلاح Rate Limiting!
+
+التغييرات:
+- publicLimiter: 100 → 200 requests/min
+- authStartLimiter: 10 → 50 requests/10min
+
+الآن:
+1. أغلق نافذة Server (Ctrl+C)
+2. شغلها تاني:
+   cd web\server
+   npm start
+
+3. اعمل Refresh للموقع (F5)
+
+الموقع هيشتغل بدون errors! ✅

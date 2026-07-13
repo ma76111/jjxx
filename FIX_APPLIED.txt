@@ -1,0 +1,12 @@
+✅ تم إصلاح المشكلة!
+
+تم إضافة allowedHosts في vite.config.ts
+
+الآن:
+1. أغلق نافذة Web Client (Ctrl+C)
+2. شغل START_ONLINE.bat مرة تانية
+
+أو:
+أغلق كل النوافذ وشغل START_ONLINE.bat من البداية
+
+الموقع هيشتغل عادي! 🚀

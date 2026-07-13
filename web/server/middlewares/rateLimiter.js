@@ -2,7 +2,7 @@ import rateLimit from 'express-rate-limit';
 
 export const publicLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 100,
+  max: 200, // Increased from 100 to 200
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'too_many_requests' },
@@ -27,8 +27,8 @@ export const protectedLimiter = rateLimit({
 });
 
 export const authStartLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 50, // Increased from 10 to 50 (for polling)
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'too_many_auth_attempts' },
