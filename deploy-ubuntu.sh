@@ -2,6 +2,7 @@
 
 # ════════════════════════════════════════
 #   🚀 Deploy Script for Ubuntu/Linux
+#   (Based on DEPLOY_FINAL.bat)
 # ════════════════════════════════════════
 
 set -e  # Exit on error
@@ -24,7 +25,7 @@ configure_env() {
     echo ""
     
     # Check if .env exists and has BOT_TOKEN
-    if [ ! -f ".env" ] || ! grep -q "BOT_TOKEN=.*[^=]" .env; then
+    if [ ! -f ".env" ] || ! grep -q "BOT_TOKEN=.*[^=]" .env 2>/dev/null; then
         echo "📝 Root .env configuration needed"
         echo ""
         
@@ -52,7 +53,7 @@ EOF
     fi
     
     # Configure web/server/.env
-    if [ ! -f "web/server/.env" ] || ! grep -q "BOT_TOKEN=.*[^=]" web/server/.env; then
+    if [ ! -f "web/server/.env" ] || ! grep -q "BOT_TOKEN=.*[^=]" web/server/.env 2>/dev/null; then
         echo "📝 Web Server .env configuration needed"
         echo ""
         
@@ -91,7 +92,7 @@ EOF
     fi
     
     # Configure web/client/.env
-    if [ ! -f "web/client/.env" ] || ! grep -q "VITE_BOT_NAME=.*[^=]" web/client/.env; then
+    if [ ! -f "web/client/.env" ] || ! grep -q "VITE_BOT_NAME=.*[^=]" web/client/.env 2>/dev/null; then
         echo "📝 Web Client .env configuration needed"
         echo ""
         
@@ -127,27 +128,31 @@ configure_env
 # Check dependencies
 # ═══════════════════════════════════════
 
+echo "[1/6] Checking dependencies..."
+
 # Check if localtunnel is installed
 if ! command -v lt &> /dev/null; then
-    echo "[!] Installing LocalTunnel..."
+    echo "   Installing LocalTunnel..."
     sudo npm install -g localtunnel
+else
+    echo "   LocalTunnel ready ✓"
 fi
 
 # Kill any existing processes on ports
-echo "[1/5] Cleaning up old processes..."
-lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-lsof -ti:5173 | xargs kill -9 2>/dev/null || true
+echo "[2/6] Cleaning up old processes..."
+lsof -ti:3001 2>/dev/null | xargs kill -9 2>/dev/null || true
+lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null || true
 sleep 2
 
 # Start Bot
-echo "[2/5] Starting Bot..."
+echo "[3/6] Starting Bot..."
 npm start > /tmp/bot.log 2>&1 &
 BOT_PID=$!
 echo "   Bot PID: $BOT_PID"
 sleep 3
 
 # Start Web Server
-echo "[3/5] Starting Web Server..."
+echo "[4/6] Starting Web Server..."
 cd web/server
 npm start > /tmp/server.log 2>&1 &
 SERVER_PID=$!
@@ -155,8 +160,8 @@ echo "   Server PID: $SERVER_PID"
 cd ../..
 sleep 5
 
-# Start Web Client
-echo "[4/5] Starting Web Client..."
+# Start Web Client with --host 0.0.0.0
+echo "[5/6] Starting Web Client..."
 cd web/client
 npm run dev -- --host 0.0.0.0 > /tmp/client.log 2>&1 &
 CLIENT_PID=$!
@@ -165,14 +170,12 @@ cd ../..
 sleep 10
 
 # Create Tunnel
-echo "[5/5] Creating public tunnel..."
+echo "[6/6] Creating public tunnel..."
 echo ""
-read -p "Enter subdomain name (or press Enter for random): " SUBDOMAIN
 
-if [ -z "$SUBDOMAIN" ]; then
-    SUBDOMAIN="mybot-$RANDOM"
-    echo "Using random subdomain: $SUBDOMAIN"
-fi
+# Generate random subdomain
+SUBDOMAIN="mybot-$RANDOM"
+echo "Using subdomain: $SUBDOMAIN"
 
 echo ""
 echo "Creating tunnel..."
@@ -185,7 +188,7 @@ TUNNEL_PID=$!
 sleep 5
 
 # Get the URL from tunnel log
-TUNNEL_URL=$(grep -oP 'https://[^\s]+' /tmp/tunnel.log | head -1)
+TUNNEL_URL=$(grep -oP 'https://[^\s]+' /tmp/tunnel.log 2>/dev/null | head -1)
 
 clear
 echo ""
@@ -199,6 +202,8 @@ echo ""
 echo "💻 Local URL:"
 echo "   http://localhost:5173"
 echo ""
+echo "════════════════════════════════════════"
+echo ""
 echo "📋 Process IDs:"
 echo "   Bot:    $BOT_PID"
 echo "   Server: $SERVER_PID"
@@ -208,6 +213,7 @@ echo ""
 echo "⚠️  Notes:"
 echo "   • First visit: click 'Continue'"
 echo "   • Keep terminal open"
+echo "   • Services run in background"
 echo ""
 echo "🔴 To stop all services:"
 echo "   ./stop-ubuntu.sh"
@@ -217,6 +223,8 @@ echo "   tail -f /tmp/bot.log"
 echo "   tail -f /tmp/server.log"
 echo "   tail -f /tmp/client.log"
 echo "   tail -f /tmp/tunnel.log"
+echo ""
+echo "────────────────────────────────────────"
 echo ""
 
 # Save PIDs to file for cleanup
