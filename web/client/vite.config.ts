@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: '0.0.0.0', // Listen on all interfaces
+    host: '0.0.0.0', // Allow external access for tunneling
     strictPort: false,
     hmr: {
       protocol: 'ws',
