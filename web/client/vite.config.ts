@@ -9,7 +9,8 @@ export default defineConfig({
     strictPort: false,
     hmr: {
       protocol: 'ws',
-      host: 'localhost',
+      host: '0.0.0.0', // Fixed: Allow HMR from tunnel domains
+      clientPort: 443, // Use HTTPS port for tunnel
     },
     proxy: {
       '/api': {
