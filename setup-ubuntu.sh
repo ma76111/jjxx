@@ -74,13 +74,16 @@ else
 fi
 cd ../..
 
-# Make deploy script executable
-chmod +x deploy-ubuntu.sh
+# Make scripts executable
+chmod +x deploy-ubuntu.sh start-local-ubuntu.sh stop-ubuntu.sh
 
 echo ""
 echo "════════════════════════════════════════"
 echo "   ✅ Setup Complete!"
 echo "════════════════════════════════════════"
+echo ""
+echo "📝 Note: The deploy script will ask you to"
+echo "   configure .env files on first run."
 echo ""
 echo "To start the project:"
 echo "  ./deploy-ubuntu.sh"

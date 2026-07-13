@@ -13,6 +13,120 @@ echo "   🚀 Starting Online Deployment"
 echo "════════════════════════════════════════"
 echo ""
 
+# ═══════════════════════════════════════
+# Configure .env files if not configured
+# ═══════════════════════════════════════
+
+configure_env() {
+    echo "════════════════════════════════════════"
+    echo "   ⚙️  Configuration Setup"
+    echo "════════════════════════════════════════"
+    echo ""
+    
+    # Check if .env exists and has BOT_TOKEN
+    if [ ! -f ".env" ] || ! grep -q "BOT_TOKEN=.*[^=]" .env; then
+        echo "📝 Root .env configuration needed"
+        echo ""
+        
+        read -p "Enter your BOT_TOKEN (from @BotFather): " BOT_TOKEN
+        read -p "Enter your BOT_NAME (e.g., mybot_bot): " BOT_NAME
+        read -p "Enter ADMIN_IDS (comma-separated Telegram IDs): " ADMIN_IDS
+        read -p "Enter MAIN_ADMIN_ID (your Telegram ID): " MAIN_ADMIN_ID
+        
+        cat > .env << EOF
+BOT_TOKEN=$BOT_TOKEN
+BOT_NAME=$BOT_NAME
+ADMIN_IDS=$ADMIN_IDS
+MAIN_ADMIN_ID=$MAIN_ADMIN_ID
+DATABASE_PATH=./bot.db
+BINANCE_API_KEY=
+BINANCE_API_SECRET=
+GITHUB_BACKUP_TOKEN=
+GITHUB_BACKUP_REPO=
+EOF
+        echo "✅ Root .env configured"
+        echo ""
+    else
+        echo "✅ Root .env already configured"
+        echo ""
+    fi
+    
+    # Configure web/server/.env
+    if [ ! -f "web/server/.env" ] || ! grep -q "BOT_TOKEN=.*[^=]" web/server/.env; then
+        echo "📝 Web Server .env configuration needed"
+        echo ""
+        
+        # Read from root .env or ask again
+        if [ -f ".env" ]; then
+            source .env
+        fi
+        
+        if [ -z "$BOT_TOKEN" ]; then
+            read -p "Enter your BOT_TOKEN: " BOT_TOKEN
+        fi
+        if [ -z "$BOT_NAME" ]; then
+            read -p "Enter your BOT_NAME: " BOT_NAME
+        fi
+        if [ -z "$MAIN_ADMIN_ID" ]; then
+            read -p "Enter MAIN_ADMIN_ID: " MAIN_ADMIN_ID
+        fi
+        
+        # Generate random JWT secret if not provided
+        JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+        
+        cat > web/server/.env << EOF
+BOT_TOKEN=$BOT_TOKEN
+BOT_NAME=$BOT_NAME
+JWT_SECRET=$JWT_SECRET
+WEB_PORT=3001
+CLIENT_ORIGIN=http://localhost:5173
+MAIN_ADMIN_ID=$MAIN_ADMIN_ID
+EOF
+        echo "✅ Web Server .env configured"
+        echo "   JWT_SECRET generated: ${JWT_SECRET:0:10}..."
+        echo ""
+    else
+        echo "✅ Web Server .env already configured"
+        echo ""
+    fi
+    
+    # Configure web/client/.env
+    if [ ! -f "web/client/.env" ] || ! grep -q "VITE_BOT_NAME=.*[^=]" web/client/.env; then
+        echo "📝 Web Client .env configuration needed"
+        echo ""
+        
+        # Read BOT_NAME from root .env
+        if [ -f ".env" ]; then
+            source .env
+        fi
+        
+        if [ -z "$BOT_NAME" ]; then
+            read -p "Enter your BOT_NAME: " BOT_NAME
+        fi
+        
+        cat > web/client/.env << EOF
+VITE_BOT_NAME=$BOT_NAME
+VITE_API_URL=http://localhost:3001/api
+EOF
+        echo "✅ Web Client .env configured"
+        echo ""
+    else
+        echo "✅ Web Client .env already configured"
+        echo ""
+    fi
+    
+    echo "════════════════════════════════════════"
+    echo ""
+    sleep 2
+}
+
+# Run configuration
+configure_env
+
+# ═══════════════════════════════════════
+# Check dependencies
+# ═══════════════════════════════════════
+
 # Check if localtunnel is installed
 if ! command -v lt &> /dev/null; then
     echo "[!] Installing LocalTunnel..."
