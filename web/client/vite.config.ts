@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0', // Listen on all interfaces
     strictPort: false,
+    allowedHosts: ['*'], // Allow all hosts (for tunnels)
     hmr: {
       protocol: 'ws',
       host: 'localhost',
