@@ -160,7 +160,7 @@ sleep 5
 # Start Web Client with --host 0.0.0.0
 echo "[5/5] Starting Web Client..."
 cd web/client
-npm run dev -- --host 0.0.0.0 > /tmp/client.log 2>&1 &
+DANGEROUSLY_DISABLE_HOST_CHECK=true npm run dev -- --host 0.0.0.0 > /tmp/client.log 2>&1 &
 CLIENT_PID=$!
 echo "   Client started (PID: $CLIENT_PID)"
 cd ../..
