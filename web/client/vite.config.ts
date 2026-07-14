@@ -2,15 +2,27 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'disable-host-check',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // Allow all hosts for tunneling
+          delete req.headers['host'];
+          next();
+        });
+      },
+    },
+  ],
   server: {
     port: 5173,
-    host: '0.0.0.0', // Listen on all interfaces
+    host: '0.0.0.0',
     strictPort: false,
-    allowedHosts: ['*'], // Allow all hosts (for tunnels)
     hmr: {
       protocol: 'ws',
       host: 'localhost',
+      clientPort: 443,
     },
     proxy: {
       '/api': {
