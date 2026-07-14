@@ -2,10 +2,8 @@
 
 # ════════════════════════════════════════
 #   🚀 Deploy Script for Ubuntu/Linux
-#   (Based on DEPLOY_FINAL.bat)
+#   (Ubuntu version of DEPLOY_FINAL.bat)
 # ════════════════════════════════════════
-
-set -e  # Exit on error
 
 clear
 echo ""
@@ -72,8 +70,8 @@ EOF
             read -p "Enter MAIN_ADMIN_ID: " MAIN_ADMIN_ID
         fi
         
-        # Generate random JWT secret if not provided
-        JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+        # Generate random JWT secret
+        JWT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
         
         cat > web/server/.env << EOF
 BOT_TOKEN=$BOT_TOKEN
@@ -84,7 +82,6 @@ CLIENT_ORIGIN=http://localhost:5173
 MAIN_ADMIN_ID=$MAIN_ADMIN_ID
 EOF
         echo "✅ Web Server .env configured"
-        echo "   JWT_SECRET generated: ${JWT_SECRET:0:10}..."
         echo ""
     else
         echo "✅ Web Server .env already configured"
@@ -118,7 +115,7 @@ EOF
     
     echo "════════════════════════════════════════"
     echo ""
-    sleep 2
+    sleep 1
 }
 
 # Run configuration
@@ -128,57 +125,56 @@ configure_env
 # Check dependencies
 # ═══════════════════════════════════════
 
-echo "[1/6] Checking dependencies..."
+echo "[1/5] Checking dependencies..."
 
 # Check if localtunnel is installed
 if ! command -v lt &> /dev/null; then
     echo "   Installing LocalTunnel..."
-    sudo npm install -g localtunnel
+    npm install -g localtunnel
 else
     echo "   LocalTunnel ready ✓"
 fi
 
 # Kill any existing processes on ports
-echo "[2/6] Cleaning up old processes..."
-lsof -ti:3001 2>/dev/null | xargs kill -9 2>/dev/null || true
-lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null || true
+echo "[2/5] Cleaning up old processes..."
+fuser -k 3001/tcp 2>/dev/null || true
+fuser -k 5173/tcp 2>/dev/null || true
 sleep 2
 
 # Start Bot
-echo "[3/6] Starting Bot..."
+echo "[3/5] Starting Bot..."
 npm start > /tmp/bot.log 2>&1 &
 BOT_PID=$!
-echo "   Bot PID: $BOT_PID"
+echo "   Bot started (PID: $BOT_PID)"
 sleep 3
 
 # Start Web Server
-echo "[4/6] Starting Web Server..."
+echo "[4/5] Starting Web Server..."
 cd web/server
 npm start > /tmp/server.log 2>&1 &
 SERVER_PID=$!
-echo "   Server PID: $SERVER_PID"
+echo "   Server started (PID: $SERVER_PID)"
 cd ../..
 sleep 5
 
 # Start Web Client with --host 0.0.0.0
-echo "[5/6] Starting Web Client..."
+echo "[5/5] Starting Web Client..."
 cd web/client
 npm run dev -- --host 0.0.0.0 > /tmp/client.log 2>&1 &
 CLIENT_PID=$!
-echo "   Client PID: $CLIENT_PID"
+echo "   Client started (PID: $CLIENT_PID)"
 cd ../..
-sleep 10
+sleep 8
 
 # Create Tunnel
-echo "[6/6] Creating public tunnel..."
 echo ""
+echo "Creating public tunnel..."
 
 # Generate random subdomain
 SUBDOMAIN="mybot-$RANDOM"
-echo "Using subdomain: $SUBDOMAIN"
-
+echo "Subdomain: $SUBDOMAIN"
 echo ""
-echo "Creating tunnel..."
+
 sleep 2
 
 # Start tunnel in background
@@ -189,6 +185,10 @@ sleep 5
 
 # Get the URL from tunnel log
 TUNNEL_URL=$(grep -oP 'https://[^\s]+' /tmp/tunnel.log 2>/dev/null | head -1)
+
+if [ -z "$TUNNEL_URL" ]; then
+    TUNNEL_URL="https://$SUBDOMAIN.loca.lt"
+fi
 
 clear
 echo ""
@@ -215,8 +215,8 @@ echo "   • First visit: click 'Continue'"
 echo "   • Keep terminal open"
 echo "   • Services run in background"
 echo ""
-echo "🔴 To stop all services:"
-echo "   ./stop-ubuntu.sh"
+echo "🔴 To stop all services, run:"
+echo "   kill $BOT_PID $SERVER_PID $CLIENT_PID $TUNNEL_PID"
 echo ""
 echo "📊 To view logs:"
 echo "   tail -f /tmp/bot.log"
@@ -233,5 +233,9 @@ echo "$SERVER_PID" > /tmp/server.pid
 echo "$CLIENT_PID" > /tmp/client.pid
 echo "$TUNNEL_PID" > /tmp/tunnel.pid
 
-# Wait for user input
-read -p "Press Enter to exit (services will continue running)..."
+# Keep running
+echo "Services are running... Press Ctrl+C to exit"
+echo ""
+
+# Wait indefinitely
+tail -f /dev/null
