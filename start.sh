@@ -175,21 +175,39 @@ stop_all() {
         fi
     fi
 
-    # Stop background processes (local/public mode)
+    # Kill ALL node instances running our scripts (catches background & manual runs)
+    echo "Killing all node/nodemon bot and server processes..."
+    pkill -f "node index.js"       2>/dev/null || true
+    pkill -f "nodemon.*index.js"   2>/dev/null || true
+    pkill -f "node web/server"     2>/dev/null || true
+    pkill -f "vite"                2>/dev/null || true
+    pkill -f "lt --port"           2>/dev/null || true
+
+    # Also kill by port (fallback)
     for PORT in 3001 5173; do
         PIDS=$(lsof -ti tcp:$PORT 2>/dev/null)
         if [ -n "$PIDS" ]; then
-            echo "Killing processes on port $PORT..."
+            echo "Killing processes on port $PORT (PID $PIDS)..."
             echo "$PIDS" | xargs kill -9 2>/dev/null || true
         fi
     done
 
+    # Clean up PID files
     for PIDFILE in /tmp/refbot_bot.pid /tmp/refbot_server.pid /tmp/refbot_client.pid /tmp/refbot_tunnel.pid; do
         if [ -f "$PIDFILE" ]; then
             PID=$(cat "$PIDFILE")
             kill -9 "$PID" 2>/dev/null || true
             rm -f "$PIDFILE"
-            echo "Stopped PID $PID"
+        fi
+    done
+
+    sleep 1
+
+    # Confirm nothing left on our ports
+    for PORT in 3001 5173; do
+        PIDS=$(lsof -ti tcp:$PORT 2>/dev/null)
+        if [ -n "$PIDS" ]; then
+            echo -e "${YELLOW}[WARN] Port $PORT still in use by PID $PIDS${NC}"
         fi
     done
 
