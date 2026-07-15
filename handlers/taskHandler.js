@@ -104,16 +104,19 @@ export async function handleTaskCreateMessage(bot, msg) {
 
   switch (state.step) {
     case 'task_create_bot_name': {
-      if (!isValidBotName(text)) {
+      if (!text || text.length < 3 || text.length > 64) {
         await bot.sendMessage(msg.chat.id, t(lang, 'invalid_bot_name'));
         return;
       }
-      setState(telegramId, 'task_create_link', { ...state.data, bot_name: text });
+      // Normalize: add @ prefix if missing and looks like a username
+      const botName = text.startsWith('@') ? text.trim() : `@${text.trim()}`;
+      setState(telegramId, 'task_create_link', { ...state.data, bot_name: botName });
       await bot.sendMessage(msg.chat.id, t(lang, 'task_referral_link'));
       break;
     }
     case 'task_create_link': {
-      if (!isValidUrl(text) && !isValidBotName(text)) {
+      // Accept any reasonable link/text: URL, t.me link, or short description
+      if (!text || text.length < 3 || text.length > 500) {
         await bot.sendMessage(msg.chat.id, t(lang, 'invalid_link'));
         return;
       }

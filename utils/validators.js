@@ -3,7 +3,9 @@
  */
 
 export function isValidBotName(name) {
-  return /^@[a-zA-Z][a-zA-Z0-9_]{3,}bot$/i.test(name.trim());
+  // Accept @username_bot, @username, username_bot, username (3-32 chars)
+  const trimmed = name.trim();
+  return /^@?[a-zA-Z][a-zA-Z0-9_]{2,31}$/i.test(trimmed);
 }
 
 export function isValidUrl(url) {
