@@ -16,8 +16,30 @@ NC='\033[0m'
 mkdir -p "$SCRIPT_DIR/logs"
 
 # ============================================================
-#  UPDATE: git pull + rebuild if new commits
+#  CLEANUP: kill any leftover bot/server processes on startup
 # ============================================================
+
+cleanup_stale() {
+    # Kill any node processes running our specific scripts
+    # to prevent 409 Conflict errors from duplicate bot instances
+    pkill -f "node index.js" 2>/dev/null || true
+    pkill -f "nodemon.*index.js" 2>/dev/null || true
+
+    # Clean up stale PID files
+    for PIDFILE in /tmp/refbot_bot.pid /tmp/refbot_server.pid /tmp/refbot_client.pid /tmp/refbot_tunnel.pid; do
+        if [ -f "$PIDFILE" ]; then
+            PID=$(cat "$PIDFILE" 2>/dev/null)
+            if [ -n "$PID" ]; then
+                kill -9 "$PID" 2>/dev/null || true
+            fi
+            rm -f "$PIDFILE"
+        fi
+    done
+
+    # Give processes time to die
+    sleep 1
+}
+
 
 auto_update() {
     if ! command -v git &>/dev/null; then
@@ -635,6 +657,9 @@ print_menu() {
 
 # Run setup on first launch (skipped if config already exists)
 setup_env
+
+# Kill any stale processes before starting
+cleanup_stale
 
 # Auto-update from git before showing menu
 auto_update
