@@ -74,7 +74,10 @@ export default function Wallet() {
 
       <div className="flex gap-2 flex-wrap">
         {tabs.map(tab_ => (
-          <button key={tab_.key} onClick={() => setTab(tab_.key)} className={`btn ${tab === tab_.key ? 'btn-primary' : 'btn-secondary'}`}>{tab_.label}</button>
+          <button key={tab_.key} onClick={() => setTab(tab_.key)}
+            className={`btn text-sm flex-1 sm:flex-none min-w-[4rem] ${tab === tab_.key ? 'btn-primary' : 'btn-secondary'}`}>
+            {tab_.label}
+          </button>
         ))}
       </div>
 
@@ -129,9 +132,12 @@ export default function Wallet() {
             {!deposits.length && <p className="text-gray-400 dark:text-gray-500 text-sm">{t('noDeposits')}</p>}
             <div className="space-y-2">
               {deposits.map(d => (
-                <div key={d.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
-                  <span className="dark:text-gray-300">#{d.id} — {d.amount} USDT — {d.method} — {d.network}</span>
-                  <span className={statusCls[d.status] ?? 'badge-gray'}>{d.status}</span>
+                <div key={d.id} className="history-row">
+                  <div className="flex flex-col gap-0.5 dark:text-gray-300 min-w-0">
+                    <span className="font-medium">#{d.id} — {d.amount} USDT</span>
+                    <span className="text-xs text-gray-400">{d.method} · {d.network}</span>
+                  </div>
+                  <span className={`${statusCls[d.status] ?? 'badge-gray'} self-start sm:self-center`}>{d.status}</span>
                 </div>
               ))}
             </div>
@@ -141,9 +147,12 @@ export default function Wallet() {
             {!withdrawals.length && <p className="text-gray-400 dark:text-gray-500 text-sm">{t('noWithdrawals')}</p>}
             <div className="space-y-2">
               {withdrawals.map(w => (
-                <div key={w.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
-                  <span className="dark:text-gray-300">#{w.id} — {w.amount} USDT — {w.network}</span>
-                  <span className={statusCls[w.status] ?? 'badge-gray'}>{w.status}</span>
+                <div key={w.id} className="history-row">
+                  <div className="flex flex-col gap-0.5 dark:text-gray-300 min-w-0">
+                    <span className="font-medium">#{w.id} — {w.amount} USDT</span>
+                    <span className="text-xs text-gray-400">{w.network}</span>
+                  </div>
+                  <span className={`${statusCls[w.status] ?? 'badge-gray'} self-start sm:self-center`}>{w.status}</span>
                 </div>
               ))}
             </div>

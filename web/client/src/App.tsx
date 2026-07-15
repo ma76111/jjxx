@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider, useI18n } from './context/I18nContext';
+import { SidebarProvider } from './context/SidebarContext';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -67,13 +68,15 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-950">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-gray-100 dark:bg-gray-950">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <Topbar />
+          <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
 
