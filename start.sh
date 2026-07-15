@@ -16,6 +16,50 @@ NC='\033[0m'
 mkdir -p "$SCRIPT_DIR/logs"
 
 # ============================================================
+#  UPDATE: git pull + rebuild if new commits
+# ============================================================
+
+auto_update() {
+    if ! command -v git &>/dev/null; then
+        return 0
+    fi
+
+    echo ""
+    echo " Checking for updates..."
+
+    # Fetch without merging
+    git fetch origin main --quiet 2>/dev/null || return 0
+
+    LOCAL=$(git rev-parse HEAD 2>/dev/null)
+    REMOTE=$(git rev-parse origin/main 2>/dev/null)
+
+    if [ "$LOCAL" = "$REMOTE" ]; then
+        echo -e "${GREEN}[OK] Already up to date.${NC}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}[UPDATE] New version found. Pulling...${NC}"
+    git pull origin main
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}[WARN] git pull failed (local changes?). Skipping update.${NC}"
+        return 0
+    fi
+
+    echo -e "${GREEN}[OK] Code updated.${NC}"
+
+    # Rebuild React client
+    echo " Rebuilding React app..."
+    (cd "$SCRIPT_DIR/web/client" && npm install --silent && npm run build)
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}[OK] React rebuilt successfully.${NC}"
+    else
+        echo -e "${RED}[WARN] React build failed. Running with previous build.${NC}"
+    fi
+    echo ""
+}
+
+# ============================================================
 #  HELPERS
 # ============================================================
 
@@ -577,8 +621,9 @@ print_menu() {
     echo "  [2]  Local + Public  - Bot + API + nodemon + public tunnel"
     echo "  [3]  PM2 Production  - Bot + Server in background (auto-restart)"
     echo "  [4]  Stop All        - Stop all running services"
-    echo "  [5]  Reconfigure     - Edit bot token / admin ID / etc."
-    echo "  [6]  Exit"
+    echo "  [5]  Update          - git pull + rebuild React"
+    echo "  [6]  Reconfigure     - Edit bot token / admin ID / etc."
+    echo "  [7]  Exit"
     echo ""
     echo " ------------------------------------------------------------"
     echo ""
@@ -591,18 +636,28 @@ print_menu() {
 # Run setup on first launch (skipped if config already exists)
 setup_env
 
+# Auto-update from git before showing menu
+auto_update
+
 # Main loop
 while true; do
     print_menu
-    read -p "  Choose (1-6): " CHOICE
+    read -p "  Choose (1-7): " CHOICE
     echo ""
     case "$CHOICE" in
         1) local_mode ;;
         2) public_mode ;;
         3) pm2_mode ;;
         4) stop_all ;;
-        5) setup_env "force" ;;
-        6)
+        5)
+            echo " Pulling latest code and rebuilding..."
+            git pull origin main
+            echo " Rebuilding React..."
+            (cd "$SCRIPT_DIR/web/client" && npm install --silent && npm run build)
+            echo -e "${GREEN}[OK] Update complete.${NC}"
+            ;;
+        6) setup_env "force" ;;
+        7)
             clear
             echo ""
             echo "  Goodbye!"
