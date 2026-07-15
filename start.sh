@@ -413,14 +413,24 @@ local_mode() {
     echo "Starting services..."
     echo ""
 
-    echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
-    node "$SCRIPT_DIR/index.js" >> "$SCRIPT_DIR/logs/bot.log" 2>&1 &
+    if command -v nodemon &>/dev/null; then
+        echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
+        (cd "$SCRIPT_DIR" && npm run dev >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
+    else
+        echo "[1/3] Telegram Bot (node)..."
+        (cd "$SCRIPT_DIR" && node index.js >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
+    fi
     echo $! > /tmp/refbot_bot.pid
     sleep 2
     echo -e "${GREEN}[OK] Bot running (PID $(cat /tmp/refbot_bot.pid))${NC}"
 
-    echo "[2/3] Web Server (port 3001)..."
-    (cd "$SCRIPT_DIR/web/server" && node index.js >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    if command -v nodemon &>/dev/null; then
+        echo "[2/3] Web Server (nodemon - auto restart on changes)..."
+        (cd "$SCRIPT_DIR/web/server" && npm run dev >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    else
+        echo "[2/3] Web Server (node)..."
+        (cd "$SCRIPT_DIR/web/server" && node index.js >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    fi
     echo $! > /tmp/refbot_server.pid
     sleep 3
     echo -e "${GREEN}[OK] Server running (PID $(cat /tmp/refbot_server.pid))${NC}"
@@ -480,23 +490,38 @@ public_mode() {
     echo "Starting services (with auto-reload on file changes)..."
     echo ""
 
-    echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
-    (cd "$SCRIPT_DIR" && npm run dev >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
+    # Use nodemon if available, otherwise fall back to plain node
+    if command -v nodemon &>/dev/null; then
+        echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
+        (cd "$SCRIPT_DIR" && npm run dev >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
+    else
+        echo "[1/3] Telegram Bot (node)..."
+        (cd "$SCRIPT_DIR" && node index.js >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
+    fi
     echo $! > /tmp/refbot_bot.pid
     sleep 2
     echo -e "${GREEN}[OK] Bot running (PID $(cat /tmp/refbot_bot.pid))${NC}"
 
-    echo "[2/3] Web Server + Dashboard (nodemon - auto restart on changes)..."
-    (cd "$SCRIPT_DIR/web/server" && npm run dev >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    if command -v nodemon &>/dev/null; then
+        echo "[2/3] Web Server + Dashboard (nodemon - auto restart on changes)..."
+        (cd "$SCRIPT_DIR/web/server" && npm run dev >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    else
+        echo "[2/3] Web Server + Dashboard (node)..."
+        (cd "$SCRIPT_DIR/web/server" && node index.js >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    fi
     echo $! > /tmp/refbot_server.pid
     sleep 4
     echo -e "${GREEN}[OK] Server running (PID $(cat /tmp/refbot_server.pid))${NC}"
 
-    echo "[3/3] React Watch Build (auto rebuild on changes)..."
-    (cd "$SCRIPT_DIR/web/client" && npm run build:watch >> "$SCRIPT_DIR/logs/client.log" 2>&1) &
-    echo $! > /tmp/refbot_client.pid
-    sleep 3
-    echo -e "${GREEN}[OK] Client watch running (PID $(cat /tmp/refbot_client.pid))${NC}"
+    if command -v nodemon &>/dev/null; then
+        echo "[3/3] React Watch Build (auto rebuild on changes)..."
+        (cd "$SCRIPT_DIR/web/client" && npm run build:watch >> "$SCRIPT_DIR/logs/client.log" 2>&1) &
+        echo $! > /tmp/refbot_client.pid
+        sleep 3
+        echo -e "${GREEN}[OK] Client watch running (PID $(cat /tmp/refbot_client.pid))${NC}"
+    else
+        echo "[3/3] React build already done, skipping watch (nodemon not installed)"
+    fi
 
     echo ""
     echo "Enter a subdomain name for your public URL."
