@@ -1,0 +1,18 @@
+{
+  "watch": [
+    "index.js",
+    "controllers",
+    "routes",
+    "middlewares",
+    "utils",
+    "config"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules",
+    "*.db",
+    "*.db-shm",
+    "*.db-wal"
+  ],
+  "delay": "500"
+}

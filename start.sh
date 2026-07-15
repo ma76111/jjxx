@@ -98,6 +98,18 @@ stop_all() {
     echo " ============================================================"
     echo ""
 
+    # Stop PM2 processes if PM2 is running
+    if command -v pm2 &>/dev/null; then
+        pm2_running=$(pm2 list 2>/dev/null | grep -c "online" || true)
+        if [ "$pm2_running" -gt 0 ]; then
+            echo "Stopping PM2 processes..."
+            pm2 stop all 2>/dev/null || true
+            pm2 delete all 2>/dev/null || true
+            echo -e "${GREEN}[OK] PM2 processes stopped${NC}"
+        fi
+    fi
+
+    # Stop background processes (local/public mode)
     for PORT in 3001 5173; do
         PIDS=$(lsof -ti tcp:$PORT 2>/dev/null)
         if [ -n "$PIDS" ]; then
@@ -118,6 +130,89 @@ stop_all() {
     echo ""
     echo -e "${GREEN}Done. All services stopped.${NC}"
     echo ""
+}
+
+# ============================================================
+#  PM2 PRODUCTION MODE
+# ============================================================
+
+check_pm2() {
+    if ! command -v pm2 &>/dev/null; then
+        echo -e "${YELLOW}PM2 not found. Installing globally...${NC}"
+        npm install -g pm2
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}ERROR: Failed to install PM2.${NC}"
+            echo "Try manually: npm install -g pm2"
+            return 1
+        fi
+        echo -e "${GREEN}[OK] PM2 installed${NC}"
+    else
+        echo -e "${GREEN}[OK] PM2 $(pm2 -v) found${NC}"
+    fi
+    return 0
+}
+
+pm2_mode() {
+    clear
+    echo ""
+    echo " ============================================================"
+    echo "  PM2 PRODUCTION MODE"
+    echo "  Bot + Server run in background, auto-restart on crash"
+    echo " ============================================================"
+    echo ""
+
+    check_node || return
+    check_pm2  || return
+    install_deps || return
+
+    # Build React client
+    echo ""
+    echo "Building React app for production..."
+    echo "(This takes ~30-60 seconds the first time)"
+    echo ""
+    (cd "$SCRIPT_DIR/web/client" && npm run build)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}ERROR: React build failed. Check errors above.${NC}"
+        return
+    fi
+    echo -e "${GREEN}[OK] React build complete${NC}"
+    echo ""
+
+    # Stop any existing PM2 processes for this project
+    pm2 delete telegram-bot  2>/dev/null || true
+    pm2 delete web-server    2>/dev/null || true
+
+    # Start via ecosystem config
+    echo "Starting with PM2..."
+    pm2 start "$SCRIPT_DIR/ecosystem.config.cjs"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}ERROR: PM2 failed to start. Check logs above.${NC}"
+        return
+    fi
+
+    # Save PM2 process list so it survives reboots
+    pm2 save
+
+    echo ""
+    echo " ============================================================"
+    echo -e "  ${GREEN}PM2 services started!${NC}"
+    echo ""
+    echo "  Dashboard  : http://localhost:3001"
+    echo "  Health     : http://localhost:3001/health"
+    echo ""
+    echo -e "  ${CYAN}Useful PM2 commands:${NC}"
+    echo "    pm2 status          → show all processes"
+    echo "    pm2 logs            → live logs (Ctrl+C to exit)"
+    echo "    pm2 logs bot        → bot logs only"
+    echo "    pm2 logs web-server → server logs only"
+    echo "    pm2 restart all     → restart everything"
+    echo "    pm2 stop all        → stop everything"
+    echo ""
+    echo -e "  ${CYAN}To auto-start on system boot:${NC}"
+    echo "    pm2 startup         → run the command it gives you"
+    echo " ============================================================"
+    echo ""
+    pm2 status
 }
 
 # ============================================================
@@ -318,7 +413,7 @@ local_mode() {
     echo "Starting services..."
     echo ""
 
-    echo "[1/3] Telegram Bot..."
+    echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
     node "$SCRIPT_DIR/index.js" >> "$SCRIPT_DIR/logs/bot.log" 2>&1 &
     echo $! > /tmp/refbot_bot.pid
     sleep 2
@@ -362,7 +457,7 @@ public_mode() {
     clear
     echo ""
     echo " ============================================================"
-    echo "  PUBLIC MODE  (build + serve + tunnel on port 3001)"
+    echo "  PUBLIC MODE  (build:watch + nodemon + tunnel on port 3001)"
     echo " ============================================================"
     echo ""
 
@@ -371,7 +466,7 @@ public_mode() {
     install_deps || return
 
     echo ""
-    echo "Building React app for production..."
+    echo "Building React app for production (first build)..."
     echo "(This takes ~30-60 seconds the first time)"
     echo ""
     (cd "$SCRIPT_DIR/web/client" && npm run build)
@@ -382,20 +477,26 @@ public_mode() {
     echo -e "${GREEN}[OK] React build complete${NC}"
     echo ""
 
-    echo "Starting services..."
+    echo "Starting services (with auto-reload on file changes)..."
     echo ""
 
-    echo "[1/2] Telegram Bot..."
-    node "$SCRIPT_DIR/index.js" >> "$SCRIPT_DIR/logs/bot.log" 2>&1 &
+    echo "[1/3] Telegram Bot (nodemon - auto restart on changes)..."
+    (cd "$SCRIPT_DIR" && npm run dev >> "$SCRIPT_DIR/logs/bot.log" 2>&1) &
     echo $! > /tmp/refbot_bot.pid
     sleep 2
     echo -e "${GREEN}[OK] Bot running (PID $(cat /tmp/refbot_bot.pid))${NC}"
 
-    echo "[2/2] Web Server + Dashboard (port 3001)..."
-    (cd "$SCRIPT_DIR/web/server" && node index.js >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
+    echo "[2/3] Web Server + Dashboard (nodemon - auto restart on changes)..."
+    (cd "$SCRIPT_DIR/web/server" && npm run dev >> "$SCRIPT_DIR/logs/server.log" 2>&1) &
     echo $! > /tmp/refbot_server.pid
     sleep 4
     echo -e "${GREEN}[OK] Server running (PID $(cat /tmp/refbot_server.pid))${NC}"
+
+    echo "[3/3] React Watch Build (auto rebuild on changes)..."
+    (cd "$SCRIPT_DIR/web/client" && npm run build:watch >> "$SCRIPT_DIR/logs/client.log" 2>&1) &
+    echo $! > /tmp/refbot_client.pid
+    sleep 3
+    echo -e "${GREEN}[OK] Client watch running (PID $(cat /tmp/refbot_client.pid))${NC}"
 
     echo ""
     echo "Enter a subdomain name for your public URL."
@@ -448,10 +549,11 @@ print_menu() {
     echo " ------------------------------------------------------------"
     echo ""
     echo "  [1]  Local Dev       - Bot + API + React dev server (localhost)"
-    echo "  [2]  Local + Public  - Bot + API + built app + public tunnel"
-    echo "  [3]  Stop All        - Stop all running services"
-    echo "  [4]  Reconfigure     - Edit bot token / admin ID / etc."
-    echo "  [5]  Exit"
+    echo "  [2]  Local + Public  - Bot + API + nodemon + public tunnel"
+    echo "  [3]  PM2 Production  - Bot + Server in background (auto-restart)"
+    echo "  [4]  Stop All        - Stop all running services"
+    echo "  [5]  Reconfigure     - Edit bot token / admin ID / etc."
+    echo "  [6]  Exit"
     echo ""
     echo " ------------------------------------------------------------"
     echo ""
@@ -467,14 +569,15 @@ setup_env
 # Main loop
 while true; do
     print_menu
-    read -p "  Choose (1-5): " CHOICE
+    read -p "  Choose (1-6): " CHOICE
     echo ""
     case "$CHOICE" in
         1) local_mode ;;
         2) public_mode ;;
-        3) stop_all ;;
-        4) setup_env "force" ;;
-        5)
+        3) pm2_mode ;;
+        4) stop_all ;;
+        5) setup_env "force" ;;
+        6)
             clear
             echo ""
             echo "  Goodbye!"

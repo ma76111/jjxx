@@ -27,21 +27,23 @@ echo.
 echo  ------------------------------------------------------------
 echo.
 echo   [1]  Local Dev       - Bot + API + React dev server (localhost)
-echo   [2]  Local + Public  - Bot + API + built app + public tunnel
-echo   [3]  Stop All        - Stop all running services
-echo   [4]  Reconfigure     - Edit .env settings
-echo   [5]  Exit
+echo   [2]  Local + Public  - Bot + API + nodemon + public tunnel
+echo   [3]  PM2 Production  - Bot + Server in background (auto-restart)
+echo   [4]  Stop All        - Stop all running services
+echo   [5]  Reconfigure     - Edit .env settings
+echo   [6]  Exit
 echo.
 echo  ------------------------------------------------------------
 echo.
 set "CHOICE="
-set /p CHOICE="  Choose (1-5): "
+set /p CHOICE="  Choose (1-6): "
 
 if "%CHOICE%"=="1" goto LOCAL
 if "%CHOICE%"=="2" goto PUBLIC
-if "%CHOICE%"=="3" goto STOP
-if "%CHOICE%"=="4" goto RECONFIGURE
-if "%CHOICE%"=="5" goto EXIT_CLEAN
+if "%CHOICE%"=="3" goto PM2
+if "%CHOICE%"=="4" goto STOP
+if "%CHOICE%"=="5" goto RECONFIGURE
+if "%CHOICE%"=="6" goto EXIT_CLEAN
 echo.
 echo   Invalid choice. Try again.
 timeout /t 2 /nobreak >nul
@@ -105,7 +107,7 @@ REM ============================================================
 cls
 echo.
 echo  ============================================================
-echo   PUBLIC MODE  (build + serve + tunnel on port 3001)
+echo   PUBLIC MODE  (build:watch + serve + tunnel on port 3001)
 echo  ============================================================
 echo.
 
@@ -119,7 +121,7 @@ call :INSTALL_DEPS
 if errorlevel 1 goto MENU
 
 echo.
-echo  Building React app for production...
+echo  Building React app for production (first build)...
 echo  (This takes ~30-60 seconds the first time)
 echo.
 cd /d "%~dp0web\client"
@@ -136,18 +138,23 @@ echo.
 echo  [OK] React build complete
 echo.
 
-echo  Starting services...
+echo  Starting services (with auto-reload on file changes)...
 echo.
 
-echo  [1/2] Telegram Bot...
-start "BOT - Telegram" cmd /k "cd /d "%~dp0" && title BOT - Telegram && color 0B && node index.js"
+echo  [1/3] Telegram Bot (nodemon - auto restart on changes)...
+start "BOT - Telegram" cmd /k "cd /d "%~dp0" && title BOT - Telegram [nodemon] && color 0B && npm run dev"
 timeout /t 3 /nobreak >nul
 echo  [OK] Bot window opened
 
-echo  [2/2] Web Server + Dashboard (port 3001)...
-start "SERVER - All" cmd /k "cd /d "%~dp0web\server" && title SERVER - All && color 0E && node index.js"
+echo  [2/3] Web Server + Dashboard (nodemon - auto restart on changes)...
+start "SERVER - All" cmd /k "cd /d "%~dp0web\server" && title SERVER - All [nodemon] && color 0E && npm run dev"
 timeout /t 5 /nobreak >nul
 echo  [OK] Server window opened
+
+echo  [3/3] React Watch Build (auto rebuild on changes)...
+start "CLIENT - Watch Build" cmd /k "cd /d "%~dp0web\client" && title CLIENT - Watch Build && color 0D && npm run build:watch"
+timeout /t 4 /nobreak >nul
+echo  [OK] Client watch window opened
 
 echo.
 echo  Enter a subdomain name for your public URL.
@@ -187,6 +194,86 @@ pause >nul
 goto MENU
 
 REM ============================================================
+:PM2
+REM ============================================================
+cls
+echo.
+echo  ============================================================
+echo   PM2 PRODUCTION MODE
+echo   Bot + Server run in background - auto-restart on crash
+echo  ============================================================
+echo.
+
+call :CHECK_NODE
+if errorlevel 1 goto MENU
+
+call :CHECK_PM2
+if errorlevel 1 goto MENU
+
+call :INSTALL_DEPS
+if errorlevel 1 goto MENU
+
+echo.
+echo  Building React app for production...
+echo  (This takes ~30-60 seconds the first time)
+echo.
+cd /d "%~dp0web\client"
+call npm run build
+if %errorlevel% neq 0 (
+    echo.
+    echo  ERROR: React build failed. Check errors above.
+    cd /d "%~dp0"
+    pause
+    goto MENU
+)
+cd /d "%~dp0"
+echo.
+echo  [OK] React build complete
+echo.
+
+echo  Stopping any existing PM2 processes...
+pm2 delete telegram-bot >nul 2>&1
+pm2 delete web-server   >nul 2>&1
+
+echo  Starting with PM2...
+pm2 start "%~dp0ecosystem.config.cjs"
+if %errorlevel% neq 0 (
+    echo.
+    echo  ERROR: PM2 failed to start. Check errors above.
+    pause
+    goto MENU
+)
+
+pm2 save
+
+cls
+echo.
+echo  ============================================================
+echo   PM2 services started!
+echo.
+echo   Dashboard  : http://localhost:3001
+echo   Health     : http://localhost:3001/health
+echo.
+echo   Useful PM2 commands:
+echo     pm2 status           - show all processes
+echo     pm2 logs             - live logs (Ctrl+C to exit)
+echo     pm2 logs bot         - bot logs only
+echo     pm2 logs web-server  - server logs only
+echo     pm2 restart all      - restart everything
+echo     pm2 stop all         - stop everything
+echo.
+echo   To auto-start on Windows boot:
+echo     pm2 startup
+echo     pm2 save
+echo  ============================================================
+echo.
+pm2 status
+echo.
+echo  Press any key to return to menu...
+pause >nul
+goto MENU
+
+REM ============================================================
 :STOP
 REM ============================================================
 cls
@@ -195,6 +282,14 @@ echo  ============================================================
 echo   STOPPING ALL SERVICES
 echo  ============================================================
 echo.
+
+echo  Stopping PM2 processes (if any)...
+where pm2 >nul 2>&1
+if %errorlevel% equ 0 (
+    pm2 stop all    >nul 2>&1
+    pm2 delete all  >nul 2>&1
+    echo  [OK] PM2 processes stopped
+)
 
 echo  Killing processes on port 3001...
 for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":3001 "') do (
@@ -206,9 +301,12 @@ for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":5173 "') do (
 )
 echo  Closing service windows...
 taskkill /FI "WINDOWTITLE eq BOT - Telegram" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq BOT - Telegram [nodemon]" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq SERVER - API" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq SERVER - All" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq SERVER - All [nodemon]" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq CLIENT - Dashboard" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq CLIENT - Watch Build" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq TUNNEL - Public" /F >nul 2>&1
 
 echo.
@@ -264,8 +362,24 @@ if %errorlevel% neq 0 (
 echo  [OK] Node.js found
 exit /b 0
 
+:CHECK_PM2
+where pm2 >nul 2>&1
+if %errorlevel% neq 0 (
+    echo  PM2 not found. Installing globally...
+    call npm install -g pm2
+    if %errorlevel% neq 0 (
+        echo  ERROR: Failed to install PM2.
+        echo  Try manually: npm install -g pm2
+        pause
+        exit /b 1
+    )
+    echo  [OK] PM2 installed
+) else (
+    echo  [OK] PM2 found
+)
+exit /b 0
+
 :CHECK_LOCALTUNNEL
-where lt >nul 2>&1
 if %errorlevel% neq 0 (
     echo  LocalTunnel not found. Installing...
     call npm install -g localtunnel

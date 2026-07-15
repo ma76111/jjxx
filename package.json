@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon --experimental-vm-modules index.js",
     "launch": "node index.js & node web/server/index.js",
     "reset": "node reset_bot.js"
   },
@@ -17,5 +18,8 @@
     "node-telegram-bot-api": "^1.1.2",
     "sqlite3": "5.1.7",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

@@ -1,0 +1,25 @@
+{
+  "watch": [
+    "index.js",
+    "handlers",
+    "services",
+    "keyboards",
+    "middlewares",
+    "jobs",
+    "utils",
+    "config",
+    "i18n",
+    "db"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules",
+    "web",
+    "logs",
+    "backups",
+    "*.db",
+    "*.db-shm",
+    "*.db-wal"
+  ],
+  "delay": "500"
+}
