@@ -76,6 +76,22 @@ VITE_API_URL=http://localhost:3001/api
 
 ### 3. Run in Development Mode
 
+#### ⚡ Quick Start (Windows) - Automated:
+
+```bash
+START.bat
+```
+
+**Interactive Menu:**
+- **[1] Local Only** - Run locally (localhost:5173)
+- **[2] Local + Public** - Run with temporary public domain (loca.lt)
+- **[3] Stop All** - Stop all services safely
+- **[4] Exit**
+
+See `HOW_TO_START.md` or `اقرأني.txt` for details.
+
+#### Manual Start (All platforms):
+
 ```bash
 # Terminal 1 — Bot
 node index.js
